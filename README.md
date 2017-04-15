@@ -19,7 +19,7 @@
 * 推荐使用`Inno Script Studio`
 
 ## 截图预览
-![01](/Snapshot/01.png)
-![02](/Snapshot/02.png)
-![03](/Snapshot/03.png)
-![04](/Snapshot/04.png)
+![01](/Snapshot/01.PNG)
+![02](/Snapshot/02.PNG)
+![03](/Snapshot/03.PNG)
+![04](/Snapshot/04.PNG)
