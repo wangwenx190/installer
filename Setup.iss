@@ -65,7 +65,10 @@ TimeStampsInUTC=TRUE
 ;如果“PrivilegesRequired”权限设置成管理员权限（或者干脆把“PrivilegesRequired=lowest”注释掉），
 ;安装程序在启动时将请求管理员权限，系统会弹出UAC窗口，此时安装程序有向任何文件夹中写入文件的权限，
 ;写入注册表也是向“HKEY_LOCAL_MACHINE”中写入，不再是向“HKEY_CURRENT_USER”中写入，
-;请注意根据此项设置的不同，要及时修改[Code]段的“is_installed_before()”函数。
+;请注意根据此项设置的不同，要及时修改[Code]段的“is_installed_before()”函数，
+;因为若无管理员权限，安装程序只能向“HKEY_CURRENT_USER”下写入条目，
+;而在管理员权限下则是向“HKEY_LOCAL_MACHINE”下写入条目（此处特指卸载条目），
+;若您硬性指定条目路径，安装程序则会无视系统，向您指定的条目写入（如果权限足够的话）。
 PrivilegesRequired=lowest
 Uninstallable=no
 ;Uninstallable=yes
