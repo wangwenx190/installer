@@ -18,36 +18,43 @@
   #error 请使用 Unicode 版 Inno Setup 编译器
 #endif
 
+#define MyAppID "{751134E2-9659-4800-B491-787AF330DAED}"
 #define MyAppName "My Program"
 #define MyAppVersion "1.5"
 #define MyAppPublisher "My Company, Inc."
-#define MyAppURL "http://www.example.com/"
-#define MyAppExeName "MyProg.exe"
+#define MyAppPublisherURL "http://www.example.com/"
+#define MyAppSupportURL MyAppPublisherURL
+#define MyAppUpdatesURL MyAppPublisherURL
 #define MyAppComments "备注"
+#define MyAppContact MyAppPublisher
 #define MyAppSupportPhone "13510102020"
-#define MyAppCopyright "Copyright ©"
+#define MyAppReadmeURL "https://github.com/wangwenx190/InternetFashionedInstaller/blob/master/README.md"
+#define MyAppLicenseURL "https://github.com/wangwenx190/InternetFashionedInstaller/blob/master/LICENSE"
+#define MyAppCopyrightYear "2017"
+#define MyAppCopyright "版权所有 © " + MyAppCopyrightYear + ", " + MyAppPublisher
+#define MyAppExeName "MyProg.exe"
 
 [Setup]
-AppId={{751134E2-9659-4800-B491-787AF330DAED}
+AppId={{#MyAppID}
 AppName={#MyAppName}
 AppVersion={#MyAppVersion}
 AppVerName={#MyAppName} {#MyAppVersion}
 AppPublisher={#MyAppPublisher}
-AppPublisherURL={#MyAppURL}
-AppSupportURL={#MyAppURL}
-AppUpdatesURL={#MyAppURL}
+AppPublisherURL={#MyAppPublisherURL}
+AppSupportURL={#MyAppSupportURL}
+AppUpdatesURL={#MyAppUpdatesURL}
 AppComments={#MyAppComments}
-AppContact={#MyAppPublisher}
+AppContact={#MyAppContact}
 AppSupportPhone={#MyAppSupportPhone}
-AppReadmeFile={#MyAppURL}
-AppCopyright=版权所有 © {#MyAppPublisher}
-DefaultDirName={pf}\{#MyAppName}
-DefaultGroupName={#MyAppName}
+AppReadmeFile={#MyAppReadmeURL}
+AppCopyright={#MyAppCopyright}
+DefaultDirName={pf}\{#MyAppPublisher}\{#MyAppName}
+DefaultGroupName={#MyAppPublisher}\{#MyAppName}
 OutputBaseFilename={#MyAppName}_{#MyAppVersion}_Setup
 VersionInfoDescription={#MyAppName} 安装程序
 VersionInfoProductName={#MyAppName}
 VersionInfoCompany={#MyAppPublisher}
-VersionInfoCopyright=版权所有 © {#MyAppPublisher}
+VersionInfoCopyright={#MyAppCopyright}
 VersionInfoProductVersion={#MyAppVersion}
 VersionInfoProductTextVersion={#MyAppVersion}
 VersionInfoTextVersion={#MyAppVersion}
@@ -61,7 +68,7 @@ DisableProgramGroupPage=yes
 DisableDirPage=yes
 DisableReadyPage=yes
 MinVersion=0,6.1.7601
-TimeStampsInUTC=TRUE
+TimeStampsInUTC=yes
 ;如果“PrivilegesRequired”权限设置成最低，安装程序将不会请求管理员权限，
 ;运行安装程序时不会弹出UAC窗口，但安装程序将无法向系统盘的“Program Files”文件夹中写入任何文件，
 ;若要写入注册表，也不能向“HKEY_LOCAL_MACHINE”下写入任何条目，只能向“HKEY_CURRENT_USER”下写入；
@@ -71,7 +78,7 @@ TimeStampsInUTC=TRUE
 ;请注意根据此项设置的不同，要及时修改[Code]段的“is_installed_before()”函数。
 ;PrivilegesRequired=lowest
 Uninstallable=yes
-SetupMutex={#MyAppName}Installer,Global\{#MyAppName}Installer
+SetupMutex={{#MyAppID}Installer,Global\{{#MyAppID}Installer
 AppMutex={#MyAppName}
 ShowLanguageDialog=no
 UninstallDisplayName={#MyAppName}
@@ -103,8 +110,8 @@ Type: filesandordirs; Name: "{app}"
 
 [Code]
 CONST
-  PRODUCT_REGISTRY_KEY_32 = 'SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\{751134E2-9659-4800-B491-787AF330DAED}_is1';
-  PRODUCT_REGISTRY_KEY_64 = 'SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\{751134E2-9659-4800-B491-787AF330DAED}_is1';
+  PRODUCT_REGISTRY_KEY_32 = 'SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\{#MyAppID}_is1';
+  PRODUCT_REGISTRY_KEY_64 = 'SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\{#MyAppID}_is1';
   WM_SYSCOMMAND = $0112;
   ID_BUTTON_ON_CLICK_EVENT = 1;
   WIZARDFORM_WIDTH_NORMAL = 600;
@@ -156,7 +163,7 @@ FUNCTION is_installed_before() : BOOLEAN;
 VAR
   appInstallPath : STRING;
 BEGIN
-  appInstallPath := 'C:\Program Files\Company\Product';
+  appInstallPath := '{pf}' + '\' + '{#MyAppPublisher}' + '\' + '{#MyAppName}';
   IF is_platform_windows_7 THEN
   BEGIN
     IF IsWin64 THEN
@@ -324,7 +331,7 @@ PROCEDURE button_license_on_click(hBtn : HWND);
 VAR
   ErrorCode : INTEGER;
 BEGIN
-  ShellExec('', 'https://github.com/wangwenx190/InternetFashionedInstaller/blob/master/LICENSE', '', '', SW_SHOW, ewNoWait, ErrorCode);
+  ShellExec('', '{#MyAppLicenseURL}', '', '', SW_SHOW, ewNoWait, ErrorCode);
 END;
 
 PROCEDURE wizard_form_on_mouse_down(Sender : TObject; Button : TMouseButton; Shift : TShiftState; X, Y : INTEGER);
