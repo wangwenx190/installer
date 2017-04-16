@@ -2,7 +2,7 @@
 一个用InnoSetup仿好压安装程序的脚本模板，改一改背景图片就可以一键打包属于自己的美观的互联网风格的安装程序
 
 ## 编译
-* 下载安装最新版的`Unicode`版`Inno Setup`（http://jrsoftware.org/isdl.php）
+* 下载安装最新版的`Unicode`版`Inno Setup`（ http://jrsoftware.org/isdl.php ）
 * 在此目录下新建`App`文件夹
 * 把您要打包的所有文件及文件夹都放到上一步新建的`App`下
 * 打开`Setup.iss`，修改`AppId`及其他涉及到具体项目的信息
