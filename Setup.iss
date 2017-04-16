@@ -69,14 +69,14 @@ TimeStampsInUTC=TRUE
 ;安装程序在启动时将请求管理员权限，系统会弹出UAC窗口，此时安装程序有向任何文件夹中写入文件的权限，
 ;写入注册表也是向“HKEY_LOCAL_MACHINE”中写入，不再是向“HKEY_CURRENT_USER”中写入，
 ;请注意根据此项设置的不同，要及时修改[Code]段的“is_installed_before()”函数。
-PrivilegesRequired=lowest
+;PrivilegesRequired=lowest
 Uninstallable=no
 ;Uninstallable=yes
 SetupMutex={#MyAppName}Installer,Global\{#MyAppName}Installer
 AppMutex={#MyAppName}
 ShowLanguageDialog=no
 ;UninstallDisplayName={#MyAppName}
-;UninstallDisplayIcon={uninstallexe}
+;UninstallDisplayIcon={uninstallexe},0
 ;ChangesAssociations=yes
 
 [Languages]
@@ -91,8 +91,8 @@ Source: ".\app\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createa
 
 [Code]
 CONST
-  PRODUCT_REGISTRY_KEY_32 = 'SOFTWARE\Microsoft\windows\CurrentVersion\Uninstall\{751134E2-9659-4800-B491-787AF330DAED}_is1';
-  PRODUCT_REGISTRY_KEY_64 = 'SOFTWARE\Wow6432Node\Microsoft\windows\CurrentVersion\Uninstall\{751134E2-9659-4800-B491-787AF330DAED}_is1';
+  PRODUCT_REGISTRY_KEY_32 = 'SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\{751134E2-9659-4800-B491-787AF330DAED}_is1';
+  PRODUCT_REGISTRY_KEY_64 = 'SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\{751134E2-9659-4800-B491-787AF330DAED}_is1';
   WM_SYSCOMMAND = $0112;
   ID_BUTTON_ON_CLICK_EVENT = 1;
   WIZARDFORM_WIDTH_NORMAL = 600;
@@ -103,7 +103,7 @@ VAR
   label_wizardform_main, label_wizardform_more_product_already_installed : TLabel;
   image_wizardform_background, image_progressbar_background, image_progressbar_foreground, PBOldProc : LONGINT;
   button_license, button_minimize, button_close, button_browse, button_setup_or_next, button_customize_setup, button_uncustomize_setup, checkbox_license, checkbox_setdefault : HWND;
-  is_wizardform_show_normal, is_installer_initialized : BOOLEAN;
+  is_wizardform_show_normal, is_installer_initialized, is_platform_windows_7, is_wizardform_released : BOOLEAN;
   edit_target_path : TEdit;
 
 TYPE
@@ -145,30 +145,50 @@ VAR
   appInstallPath : STRING;
 BEGIN
   appInstallPath := 'C:\Program Files\Company\Product';
-  IF IsWin64 THEN
+  IF is_platform_windows_7 THEN
   BEGIN
-    IF RegKeyExists(HKEY_CURRENT_USER, PRODUCT_REGISTRY_KEY_64) THEN
+    IF IsWin64 THEN
     BEGIN
-      IF RegValueExists(HKEY_CURRENT_USER, PRODUCT_REGISTRY_KEY_64, 'InstallLocation') THEN
+      IF RegKeyExists(HKEY_LOCAL_MACHINE, PRODUCT_REGISTRY_KEY_64) THEN
       BEGIN
-        RegQueryStringValue(HKEY_CURRENT_USER, PRODUCT_REGISTRY_KEY_64, 'InstallLocation', appInstallPath);
-        edit_target_path.Text := appInstallPath;
-        Result := TRUE;
+        IF RegValueExists(HKEY_LOCAL_MACHINE, PRODUCT_REGISTRY_KEY_64, 'InstallLocation') THEN
+        BEGIN
+          RegQueryStringValue(HKEY_LOCAL_MACHINE, PRODUCT_REGISTRY_KEY_64, 'InstallLocation', appInstallPath);
+          edit_target_path.Text := appInstallPath;
+          Result := TRUE;
+        END ELSE
+        BEGIN
+          Result := FALSE;
+        END;
       END ELSE
       BEGIN
         Result := FALSE;
       END;
     END ELSE
     BEGIN
-      Result := FALSE;
+      IF RegKeyExists(HKEY_LOCAL_MACHINE, PRODUCT_REGISTRY_KEY_32) THEN
+      BEGIN
+        IF RegValueExists(HKEY_LOCAL_MACHINE, PRODUCT_REGISTRY_KEY_32, 'InstallLocation') THEN
+        BEGIN
+          RegQueryStringValue(HKEY_LOCAL_MACHINE, PRODUCT_REGISTRY_KEY_32, 'InstallLocation', appInstallPath);
+          edit_target_path.Text := appInstallPath;
+          Result := TRUE;
+        END ELSE
+        BEGIN
+          Result := FALSE;
+        END;
+      END ELSE
+      BEGIN
+        Result := FALSE;
+      END;
     END;
   END ELSE
   BEGIN
-    IF RegKeyExists(HKEY_CURRENT_USER, PRODUCT_REGISTRY_KEY_32) THEN
+    IF RegKeyExists(HKEY_LOCAL_MACHINE, PRODUCT_REGISTRY_KEY_32) THEN
     BEGIN
-      IF RegValueExists(HKEY_CURRENT_USER, PRODUCT_REGISTRY_KEY_32, 'InstallLocation') THEN
+      IF RegValueExists(HKEY_LOCAL_MACHINE, PRODUCT_REGISTRY_KEY_32, 'InstallLocation') THEN
       BEGIN
-        RegQueryStringValue(HKEY_CURRENT_USER, PRODUCT_REGISTRY_KEY_32, 'InstallLocation', appInstallPath);
+        RegQueryStringValue(HKEY_LOCAL_MACHINE, PRODUCT_REGISTRY_KEY_32, 'InstallLocation', appInstallPath);
         edit_target_path.Text := appInstallPath;
         Result := TRUE;
       END ELSE
@@ -276,7 +296,7 @@ VAR
   w : INTEGER;
 BEGIN
   Result := CallWindowProc(PBOldProc, h, Msg, wParam, lParam);
-  IF ((Msg = $402) and (WizardForm.ProgressGauge.Position > WizardForm.ProgressGauge.Min)) THEN
+  IF ((Msg = $402) AND (WizardForm.ProgressGauge.Position > WizardForm.ProgressGauge.Min)) THEN
   BEGIN
     i1 := WizardForm.ProgressGauge.Position - WizardForm.ProgressGauge.Min;
     i2 := WizardForm.ProgressGauge.Max - WizardForm.ProgressGauge.Min;
@@ -301,10 +321,26 @@ BEGIN
   SendMessage(WizardForm.Handle, WM_SYSCOMMAND, $F012, 0);
 END;
 
+FUNCTION InitializeSetup() : BOOLEAN;
+VAR
+  sysVersion : TWindowsVersion;
+BEGIN
+  GetWindowsVersionEx(sysVersion);
+  IF sysVersion.NTPlatform AND (sysVersion.Major = 6) AND (sysVersion.Minor = 1) THEN
+  BEGIN
+    is_platform_windows_7 := TRUE;
+  END ELSE
+  BEGIN
+    is_platform_windows_7 := FALSE;
+  END;
+  Result := TRUE;
+END;
+
 PROCEDURE InitializeWizard();
 BEGIN
   is_installer_initialized := TRUE;
   is_wizardform_show_normal := TRUE;
+  is_wizardform_released := FALSE;
   WizardForm.OuterNotebook.Hide;
   WizardForm.Bevel.Hide;
   WITH WizardForm DO
@@ -397,11 +433,14 @@ END;
 
 PROCEDURE DeinitializeSetup();
 BEGIN
-  gdipShutdown();
-  IF is_installer_initialized THEN
+  IF (is_wizardform_released = FALSE) THEN
   BEGIN
-    WizardForm.Release();
-    WizardForm.Close();
+    gdipShutdown();
+    IF is_installer_initialized THEN
+    BEGIN
+      WizardForm.Release();
+      WizardForm.Close();
+    END;
   END;
 END;
 
@@ -461,6 +500,7 @@ BEGIN
   END;
   IF (CurStep = ssDone) THEN
   BEGIN
+    is_wizardform_released := TRUE;
     ImgRelease(image_wizardform_background);
     ImgRelease(image_progressbar_background);
     ImgRelease(image_progressbar_foreground);
