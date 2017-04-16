@@ -70,13 +70,12 @@ TimeStampsInUTC=TRUE
 ;写入注册表也是向“HKEY_LOCAL_MACHINE”中写入，不再是向“HKEY_CURRENT_USER”中写入，
 ;请注意根据此项设置的不同，要及时修改[Code]段的“is_installed_before()”函数。
 ;PrivilegesRequired=lowest
-Uninstallable=no
-;Uninstallable=yes
+Uninstallable=yes
 SetupMutex={#MyAppName}Installer,Global\{#MyAppName}Installer
 AppMutex={#MyAppName}
 ShowLanguageDialog=no
-;UninstallDisplayName={#MyAppName}
-;UninstallDisplayIcon={uninstallexe},0
+UninstallDisplayName={#MyAppName}
+UninstallDisplayIcon={uninstallexe},0
 ;ChangesAssociations=yes
 
 [Languages]
@@ -86,8 +85,21 @@ Name: "default"; MessagesFile: ".\Languages\ChineseSimplified.isl"
 Source: ".\tmp\*"; DestDir: "{tmp}"; Flags: dontcopy solidbreak nocompression; Attribs: hidden system
 Source: ".\app\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 
-;[UninstallDelete]
-;Type: filesandordirs; Name: "{app}"
+;若有写入注册表条目的需要，请取消此区段的注释并自行添加相关脚本
+;[Registry]
+;Root: HKCU; Subkey: "Software\My Company"; Flags: uninsdeletekeyifempty
+;Root: HKCU; Subkey: "Software\My Company\My Program"; Flags: uninsdeletekey
+;Root: HKLM; Subkey: "Software\My Company"; Flags: uninsdeletekeyifempty
+;Root: HKLM; Subkey: "Software\My Company\My Program"; Flags: uninsdeletekey
+;Root: HKLM; Subkey: "Software\My Company\My Program\Settings"; ValueType: string; ValueName: "InstallPath"; ValueData: "{app}"
+
+;若有创建快捷方式的需要，请取消此区段的注释并自行添加相关脚本
+;[Icons]
+;Name: "{group}\My Program"; Filename: "{app}\MYPROG.EXE"; Parameters: "/play filename.mid"; WorkingDir: "{app}"; Comment: "This is my program"; IconFilename: "{app}\myicon.ico"
+;Name: "{group}\Documents"; Filename: "{app}\Doc"; Flags: foldershortcut
+
+[UninstallDelete]
+Type: filesandordirs; Name: "{app}"
 
 [Code]
 CONST
@@ -312,7 +324,7 @@ PROCEDURE button_license_on_click(hBtn : HWND);
 VAR
   ErrorCode : INTEGER;
 BEGIN
-  ShellExec('', 'https://mit-license.org/', '', '', SW_SHOW, ewNoWait, ErrorCode);
+  ShellExec('', 'https://github.com/wangwenx190/InternetFashionedInstaller/blob/master/LICENSE', '', '', SW_SHOW, ewNoWait, ErrorCode);
 END;
 
 PROCEDURE wizard_form_on_mouse_down(Sender : TObject; Button : TMouseButton; Shift : TShiftState; X, Y : INTEGER);
