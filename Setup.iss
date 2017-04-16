@@ -69,14 +69,6 @@ DisableDirPage=yes
 DisableReadyPage=yes
 MinVersion=0,6.1.7601
 TimeStampsInUTC=yes
-;如果“PrivilegesRequired”权限设置成最低，安装程序将不会请求管理员权限，
-;运行安装程序时不会弹出UAC窗口，但安装程序将无法向系统盘的“Program Files”文件夹中写入任何文件，
-;若要写入注册表，也不能向“HKEY_LOCAL_MACHINE”下写入任何条目，只能向“HKEY_CURRENT_USER”下写入；
-;如果“PrivilegesRequired”权限设置成管理员权限（或者干脆把“PrivilegesRequired=lowest”注释掉），
-;安装程序在启动时将请求管理员权限，系统会弹出UAC窗口，此时安装程序有向任何文件夹中写入文件的权限，
-;写入注册表也是向“HKEY_LOCAL_MACHINE”中写入，不再是向“HKEY_CURRENT_USER”中写入，
-;请注意根据此项设置的不同，要及时修改[Code]段的“is_installed_before()”函数。
-;PrivilegesRequired=lowest
 Uninstallable=yes
 SetupMutex={{#MyAppID}Installer,Global\{{#MyAppID}Installer
 AppMutex={#MyAppName}
@@ -163,7 +155,7 @@ FUNCTION is_installed_before() : BOOLEAN;
 VAR
   appInstallPath : STRING;
 BEGIN
-  appInstallPath := '{pf}' + '\' + '{#MyAppPublisher}' + '\' + '{#MyAppName}';
+  appInstallPath := ExpandConstant('{pf}') + '\' + '{#MyAppPublisher}' + '\' + '{#MyAppName}';
   IF is_platform_windows_7 THEN
   BEGIN
     IF IsWin64 THEN
