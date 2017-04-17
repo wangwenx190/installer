@@ -86,14 +86,17 @@ Source: ".\tmp\botva2.dll"; DestDir: "{tmp}\botva2.dll"; Flags: dontcopy solidbr
 Source: ".\tmp\InnoCallback.dll"; DestDir: "{tmp}\InnoCallback.dll"; Flags: dontcopy solidbreak nocompression; Attribs: hidden system
 Source: ".\tmp\background_finish.png"; DestDir: "{tmp}\background_finish.png"; Flags: dontcopy solidbreak nocompression; Attribs: hidden system
 Source: ".\tmp\background_installing.png"; DestDir: "{tmp}\background_installing.png"; Flags: dontcopy solidbreak nocompression; Attribs: hidden system
+Source: ".\tmp\background_messagebox.png"; DestDir: "{tmp}\background_messagebox.png"; Flags: dontcopy solidbreak nocompression; Attribs: hidden system
 Source: ".\tmp\background_welcome.png"; DestDir: "{tmp}\background_welcome.png"; Flags: dontcopy solidbreak nocompression; Attribs: hidden system
 Source: ".\tmp\background_welcome_more.png"; DestDir: "{tmp}\background_welcome_more.png"; Flags: dontcopy solidbreak nocompression; Attribs: hidden system
 Source: ".\tmp\button_browse.png"; DestDir: "{tmp}\button_browse.png"; Flags: dontcopy solidbreak nocompression; Attribs: hidden system
+Source: ".\tmp\button_cancel.png"; DestDir: "{tmp}\button_cancel.png"; Flags: dontcopy solidbreak nocompression; Attribs: hidden system
 Source: ".\tmp\button_close.png"; DestDir: "{tmp}\button_close.png"; Flags: dontcopy solidbreak nocompression; Attribs: hidden system
 Source: ".\tmp\button_customize_setup.png"; DestDir: "{tmp}\button_customize_setup.png"; Flags: dontcopy solidbreak nocompression; Attribs: hidden system
 Source: ".\tmp\button_finish.png"; DestDir: "{tmp}\button_finish.png"; Flags: dontcopy solidbreak nocompression; Attribs: hidden system
 Source: ".\tmp\button_license.png"; DestDir: "{tmp}\button_license.png"; Flags: dontcopy solidbreak nocompression; Attribs: hidden system
 Source: ".\tmp\button_minimize.png"; DestDir: "{tmp}\button_minimize.png"; Flags: dontcopy solidbreak nocompression; Attribs: hidden system
+Source: ".\tmp\button_ok.png"; DestDir: "{tmp}\button_ok.png"; Flags: dontcopy solidbreak nocompression; Attribs: hidden system
 Source: ".\tmp\button_setup_or_next.png"; DestDir: "{tmp}\button_setup_or_next.png"; Flags: dontcopy solidbreak nocompression; Attribs: hidden system
 Source: ".\tmp\button_uncustomize_setup.png"; DestDir: "{tmp}\button_uncustomize_setup.png"; Flags: dontcopy solidbreak nocompression; Attribs: hidden system
 Source: ".\tmp\checkbox_license.png"; DestDir: "{tmp}\checkbox_license.png"; Flags: dontcopy solidbreak nocompression; Attribs: hidden system
@@ -128,38 +131,40 @@ CONST
   WIZARDFORM_HEIGHT_MORE = 503;
 
 VAR
-  label_wizardform_main, label_wizardform_more_product_already_installed : TLabel;
-  image_wizardform_background, image_progressbar_background, image_progressbar_foreground, PBOldProc : LONGINT;
-  button_license, button_minimize, button_close, button_browse, button_setup_or_next, button_customize_setup, button_uncustomize_setup, checkbox_license, checkbox_setdefault : HWND;
-  is_wizardform_show_normal, is_installer_initialized, is_platform_windows_7, is_wizardform_released : BOOLEAN;
+  label_wizardform_main, label_messagebox_main, label_wizardform_more_product_already_installed, label_messagebox_information, label_messagebox_title : TLabel;
+  image_wizardform_background, image_messagebox_background, image_progressbar_background, image_progressbar_foreground, PBOldProc : LONGINT;
+  button_license, button_minimize, button_close, button_browse, button_setup_or_next, button_customize_setup, button_uncustomize_setup, checkbox_license, checkbox_setdefault, button_messagebox_close, button_messagebox_ok, button_messagebox_cancel : HWND;
+  is_wizardform_show_normal, is_installer_initialized, is_platform_windows_7, is_wizardform_released, can_exit_setup : BOOLEAN;
   edit_target_path : TEdit;
   version_installed_before : EXTENDED;
+  messagebox_close : TSetupForm;
 
 TYPE
   TBtnEventProc = PROCEDURE(h : HWND);
   TPBProc = FUNCTION(h : hWnd; Msg, wParam, lParam : LONGINT) : LONGINT;
 
-FUNCTION  ImgLoad(h : HWND; FileName : PAnsiChar; Left, Top, Width, Height : INTEGER; Stretch, IsBkg : BOOLEAN) : LONGINT; EXTERNAL 'ImgLoad@files:botva2.dll stdcall delayload';
-PROCEDURE ImgSetVisibility(img : LONGINT; Visible : BOOLEAN); EXTERNAL 'ImgSetVisibility@files:botva2.dll stdcall delayload';
-PROCEDURE ImgApplyChanges(h : HWND); EXTERNAL 'ImgApplyChanges@files:botva2.dll stdcall delayload';
-PROCEDURE ImgSetPosition(img : LONGINT; NewLeft, NewTop, NewWidth, NewHeight : INTEGER); EXTERNAL 'ImgSetPosition@files:botva2.dll stdcall delayload';
-PROCEDURE ImgRelease(img : LONGINT); EXTERNAL 'ImgRelease@files:botva2.dll stdcall delayload';
-PROCEDURE gdipShutdown();  EXTERNAL 'gdipShutdown@files:botva2.dll stdcall delayload';
-FUNCTION  WrapBtnCallback(Callback : TBtnEventProc; ParamCount : INTEGER) : LONGWORD; EXTERNAL 'wrapcallback@files:innocallback.dll stdcall delayload';
-FUNCTION  BtnCreate(hParent : HWND; Left, Top, Width, Height : INTEGER; FileName : PAnsiChar; ShadowWidth : INTEGER; IsCheckBtn : BOOLEAN) : HWND;  EXTERNAL 'BtnCreate@files:botva2.dll stdcall delayload';
-PROCEDURE BtnSetVisibility(h : HWND; Value : BOOLEAN); EXTERNAL 'BtnSetVisibility@files:botva2.dll stdcall delayload';
-PROCEDURE BtnSetEvent(h : HWND; EventID : INTEGER; Event : LONGWORD); EXTERNAL 'BtnSetEvent@files:botva2.dll stdcall delayload';
-PROCEDURE BtnSetEnabled(h : HWND; Value : BOOLEAN); EXTERNAL 'BtnSetEnabled@files:botva2.dll stdcall delayload';
-FUNCTION  BtnGetChecked(h : HWND) : BOOLEAN; EXTERNAL 'BtnGetChecked@files:botva2.dll stdcall delayload';
-PROCEDURE BtnSetChecked(h : HWND; Value : BOOLEAN); EXTERNAL 'BtnSetChecked@files:botva2.dll stdcall delayload';
-PROCEDURE BtnSetPosition(h : HWND; NewLeft, NewTop, NewWidth, NewHeight : INTEGER);  EXTERNAL 'BtnSetPosition@files:botva2.dll stdcall delayload';
-FUNCTION  SetWindowLong(h : HWnd; Index : INTEGER; NewLong : LONGINT) : LONGINT; EXTERNAL 'SetWindowLongA@user32.dll stdcall';
-FUNCTION  PBCallBack(P : TPBProc; ParamCount : INTEGER) : LONGWORD; EXTERNAL 'wrapcallback@files:innocallback.dll stdcall delayload';
-FUNCTION  CallWindowProc(lpPrevWndFunc : LONGINT; h : HWND; Msg : UINT; wParam, lParam : LONGINT) : LONGINT; EXTERNAL 'CallWindowProcA@user32.dll stdcall';
-PROCEDURE ImgSetVisiblePart(img : LONGINT; NewLeft, NewTop, NewWidth, NewHeight : INTEGER); EXTERNAL 'ImgSetVisiblePart@files:botva2.dll stdcall delayload';
-FUNCTION  ReleaseCapture() : LONGINT; EXTERNAL 'ReleaseCapture@user32.dll stdcall';
-FUNCTION  CreateRoundRectRgn(p1, p2, p3, p4, p5, p6 : INTEGER) : THandle; EXTERNAL 'CreateRoundRectRgn@gdi32 stdcall';
-FUNCTION  SetWindowRgn(h : HWND; hRgn : THandle; bRedraw : BOOLEAN) : INTEGER; EXTERNAL 'SetWindowRgn@user32 stdcall';
+FUNCTION  ImgLoad(h : HWND; FileName : PAnsiChar; Left, Top, Width, Height : INTEGER; Stretch, IsBkg : BOOLEAN) : LONGINT; EXTERNAL 'ImgLoad@files:botva2.dll STDCALL DELAYLOAD';
+PROCEDURE ImgSetVisibility(img : LONGINT; Visible : BOOLEAN); EXTERNAL 'ImgSetVisibility@files:botva2.dll STDCALL DELAYLOAD';
+PROCEDURE ImgApplyChanges(h : HWND); EXTERNAL 'ImgApplyChanges@files:botva2.dll STDCALL DELAYLOAD';
+PROCEDURE ImgSetPosition(img : LONGINT; NewLeft, NewTop, NewWidth, NewHeight : INTEGER); EXTERNAL 'ImgSetPosition@files:botva2.dll STDCALL DELAYLOAD';
+PROCEDURE ImgRelease(img : LONGINT); EXTERNAL 'ImgRelease@files:botva2.dll STDCALL DELAYLOAD';
+PROCEDURE CreateFormFromImage(h : HWND; FileName : PAnsiChar); EXTERNAL 'CreateFormFromImage@files:botva2.dll STDCALL DELAYLOAD';
+PROCEDURE gdipShutdown();  EXTERNAL 'gdipShutdown@files:botva2.dll STDCALL DELAYLOAD';
+FUNCTION  WrapBtnCallback(Callback : TBtnEventProc; ParamCount : INTEGER) : LONGWORD; EXTERNAL 'wrapcallback@files:innocallback.dll STDCALL DELAYLOAD';
+FUNCTION  BtnCreate(hParent : HWND; Left, Top, Width, Height : INTEGER; FileName : PAnsiChar; ShadowWidth : INTEGER; IsCheckBtn : BOOLEAN) : HWND;  EXTERNAL 'BtnCreate@files:botva2.dll STDCALL DELAYLOAD';
+PROCEDURE BtnSetVisibility(h : HWND; Value : BOOLEAN); EXTERNAL 'BtnSetVisibility@files:botva2.dll STDCALL DELAYLOAD';
+PROCEDURE BtnSetEvent(h : HWND; EventID : INTEGER; Event : LONGWORD); EXTERNAL 'BtnSetEvent@files:botva2.dll STDCALL DELAYLOAD';
+PROCEDURE BtnSetEnabled(h : HWND; Value : BOOLEAN); EXTERNAL 'BtnSetEnabled@files:botva2.dll STDCALL DELAYLOAD';
+FUNCTION  BtnGetChecked(h : HWND) : BOOLEAN; EXTERNAL 'BtnGetChecked@files:botva2.dll STDCALL DELAYLOAD';
+PROCEDURE BtnSetChecked(h : HWND; Value : BOOLEAN); EXTERNAL 'BtnSetChecked@files:botva2.dll STDCALL DELAYLOAD';
+PROCEDURE BtnSetPosition(h : HWND; NewLeft, NewTop, NewWidth, NewHeight : INTEGER);  EXTERNAL 'BtnSetPosition@files:botva2.dll STDCALL DELAYLOAD';
+FUNCTION  SetWindowLong(h : HWnd; Index : INTEGER; NewLong : LONGINT) : LONGINT; EXTERNAL 'SetWindowLongA@user32.dll STDCALL';
+FUNCTION  PBCallBack(P : TPBProc; ParamCount : INTEGER) : LONGWORD; EXTERNAL 'wrapcallback@files:innocallback.dll STDCALL DELAYLOAD';
+FUNCTION  CallWindowProc(lpPrevWndFunc : LONGINT; h : HWND; Msg : UINT; wParam, lParam : LONGINT) : LONGINT; EXTERNAL 'CallWindowProcA@user32.dll STDCALL';
+PROCEDURE ImgSetVisiblePart(img : LONGINT; NewLeft, NewTop, NewWidth, NewHeight : INTEGER); EXTERNAL 'ImgSetVisiblePart@files:botva2.dll STDCALL DELAYLOAD';
+FUNCTION  ReleaseCapture() : LONGINT; EXTERNAL 'ReleaseCapture@user32.dll STDCALL';
+FUNCTION  CreateRoundRectRgn(p1, p2, p3, p4, p5, p6 : INTEGER) : THandle; EXTERNAL 'CreateRoundRectRgn@gdi32 STDCALL';
+FUNCTION  SetWindowRgn(h : HWND; hRgn : THandle; bRedraw : BOOLEAN) : INTEGER; EXTERNAL 'SetWindowRgn@user32 STDCALL';
 
 //调用这个函数可以使矩形窗口转变为圆角矩形窗口
 PROCEDURE shape_form_round(aForm : TForm; edgeSize : INTEGER);
@@ -329,10 +334,28 @@ BEGIN
   ShellExec('', '{#MyAppLicenseURL}', '', '', SW_SHOW, ewNoWait, ErrorCode);
 END;
 
-PROCEDURE wizard_form_on_mouse_down(Sender : TObject; Button : TMouseButton; Shift : TShiftState; X, Y : INTEGER);
+PROCEDURE button_messagebox_ok_on_click(hBtn : HWND);
+BEGIN
+  can_exit_setup := TRUE;
+  messagebox_close.Close();
+END;
+
+PROCEDURE button_messagebox_cancel_on_click(hBtn : HWND);
+BEGIN
+  can_exit_setup := FALSE;
+  messagebox_close.Close();
+END;
+
+PROCEDURE wizardform_on_mouse_down(Sender : TObject; Button : TMouseButton; Shift : TShiftState; X, Y : INTEGER);
 BEGIN
   ReleaseCapture();
   SendMessage(WizardForm.Handle, WM_SYSCOMMAND, $F012, 0);
+END;
+
+PROCEDURE messagebox_on_mouse_down(Sender : TObject; Button : TMouseButton; Shift : TShiftState; X, Y : INTEGER);
+BEGIN
+  ReleaseCapture();
+  SendMessage(messagebox_close.Handle, WM_SYSCOMMAND, $F012, 0);
 END;
 
 PROCEDURE determine_wether_is_windows_7_or_not();
@@ -346,6 +369,27 @@ BEGIN
   END ELSE
   BEGIN
     is_platform_windows_7 := FALSE;
+  END;
+END;
+
+PROCEDURE CancelButtonClick(CurPageID : INTEGER; VAR Cancel, Confirm: BOOLEAN);
+BEGIN
+  Confirm := FALSE;
+  messagebox_close.Center();
+  messagebox_close.ShowModal();
+  IF can_exit_setup THEN
+  BEGIN
+    ImgRelease(image_wizardform_background);
+    ImgRelease(image_progressbar_background);
+    ImgRelease(image_progressbar_foreground);
+    ImgRelease(image_messagebox_background);
+    gdipShutdown();
+    messagebox_close.Release();
+    WizardForm.Release();
+    Cancel := TRUE;
+  END ELSE
+  BEGIN
+    Cancel := FALSE;
   END;
 END;
 
@@ -400,6 +444,7 @@ BEGIN
     Font.Color := clGray;
     Caption := '软件已经安装，不允许更换目录。';
     Transparent := TRUE;
+    OnMouseDown := @wizardform_on_mouse_down;
   END;
   label_wizardform_more_product_already_installed.Hide;
   label_wizardform_main := TLabel.Create(WizardForm);
@@ -413,7 +458,7 @@ BEGIN
     Height := WizardForm.Height;
     Caption := '';
     Transparent := TRUE;
-    OnMouseDown := @wizard_form_on_mouse_down;
+    OnMouseDown := @wizardform_on_mouse_down;
   END;
   edit_target_path:= TEdit.Create(WizardForm);
   WITH edit_target_path DO
@@ -445,6 +490,9 @@ BEGIN
   ExtractTemporaryFile('background_finish.png');
   ExtractTemporaryFile('button_close.png');
   ExtractTemporaryFile('button_minimize.png');
+  ExtractTemporaryFile('background_messagebox.png');
+  ExtractTemporaryFile('button_cancel.png');
+  ExtractTemporaryFile('button_ok.png');
   button_close := BtnCreate(WizardForm.Handle, 570, 0, 30, 30, ExpandConstant('{tmp}\button_close.png'), 0, FALSE);
   BtnSetEvent(button_close, ID_BUTTON_ON_CLICK_EVENT, WrapBtnCallback(@button_close_on_click, 1));
   button_minimize := BtnCreate(WizardForm.Handle, 540, 0, 30, 30, ExpandConstant('{tmp}\button_minimize.png'), 0, FALSE);
@@ -461,17 +509,78 @@ BEGIN
   BtnSetVisibility(button_uncustomize_setup, FALSE);
   PBOldProc := SetWindowLong(WizardForm.ProgressGauge.Handle, -4, PBCallBack(@PBProc, 4));
   ImgApplyChanges(WizardForm.Handle);
+  messagebox_close := CreateCustomForm();
+  WITH messagebox_close DO
+  BEGIN
+    BorderStyle := bsNone;
+    Width := 380;
+    Height := 190;
+    Color := clWhite;
+    Caption := '退出安装向导';
+  END;
+  label_messagebox_title := TLabel.Create(messagebox_close);
+  WITH label_messagebox_title DO
+  BEGIN
+    Parent := messagebox_close;
+    AutoSize := FALSE;
+    Left := 30;
+    Top := 5;
+    Width := 400;
+    Height := 20;
+    Font.Name := '微软雅黑';
+    Font.Size := 10;
+    Font.Color := clWhite;
+    Caption := '{#MyAppName}';
+    Transparent := TRUE;
+    OnMouseDown := @messagebox_on_mouse_down;
+  END;
+  label_messagebox_information := TLabel.Create(messagebox_close);
+  WITH label_messagebox_information DO
+  BEGIN
+    Parent := messagebox_close;
+    AutoSize := FALSE;
+    Left := 70;
+    Top := 64;
+    Width := 400;
+    Height := 20;
+    Font.Name := '微软雅黑';
+    Font.Size := 10;
+    Font.Color := clBlack;
+    Caption := '您确定要退出“{#MyAppName}”安装程序？';
+    Transparent := TRUE;
+    OnMouseDown := @messagebox_on_mouse_down;
+  END;
+  label_messagebox_main := TLabel.Create(messagebox_close);
+  WITH label_messagebox_main DO
+  BEGIN
+    Parent := messagebox_close;
+    AutoSize := FALSE;
+    Left := 0;
+    Top := 0;
+    Width := messagebox_close.Width;
+    Height := messagebox_close.Height;
+    Caption := '';
+    Transparent := TRUE;
+    OnMouseDown := @messagebox_on_mouse_down;
+  END;
+  image_messagebox_background := ImgLoad(messagebox_close.Handle, ExpandConstant('{tmp}\background_messagebox.png'), 0, 0, 380, 190, FALSE, TRUE);
+  button_messagebox_close := BtnCreate(messagebox_close.Handle, 350, 0, 30, 30, ExpandConstant('{tmp}\button_close.png'), 0, FALSE);
+  BtnSetEvent(button_messagebox_close, ID_BUTTON_ON_CLICK_EVENT, WrapBtnCallback(@button_messagebox_cancel_on_click, 1));
+  button_messagebox_ok := BtnCreate(messagebox_close.Handle, 206, 150, 76, 28, ExpandConstant('{tmp}\button_ok.png'), 0, FALSE);
+  BtnSetEvent(button_messagebox_ok, ID_BUTTON_ON_CLICK_EVENT, WrapBtnCallback(@button_messagebox_ok_on_click, 1));
+  button_messagebox_cancel := BtnCreate(messagebox_close.Handle, 293, 150, 76, 28, ExpandConstant('{tmp}\button_cancel.png'), 0, FALSE);
+  BtnSetEvent(button_messagebox_cancel, ID_BUTTON_ON_CLICK_EVENT, WrapBtnCallback(@button_messagebox_cancel_on_click, 1));
+  ImgApplyChanges(messagebox_close.Handle);
 END;
 
 PROCEDURE DeinitializeSetup();
 BEGIN
-  IF (is_wizardform_released = FALSE) THEN
+  IF ((is_wizardform_released = FALSE) AND (can_exit_setup = FALSE)) THEN
   BEGIN
     gdipShutdown();
     IF is_installer_initialized THEN
     BEGIN
       WizardForm.Release();
-      WizardForm.Close();
     END;
   END;
 END;
@@ -536,9 +645,10 @@ BEGIN
     ImgRelease(image_wizardform_background);
     ImgRelease(image_progressbar_background);
     ImgRelease(image_progressbar_foreground);
+    ImgRelease(image_messagebox_background);
     gdipShutdown();
+    messagebox_close.Release();
     WizardForm.Release();
-    WizardForm.Close();
   END;
 END;
 
