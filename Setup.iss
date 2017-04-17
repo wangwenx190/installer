@@ -131,7 +131,7 @@ CONST
   WIZARDFORM_HEIGHT_MORE = 503;
 
 VAR
-  label_wizardform_main, label_messagebox_main, label_wizardform_more_product_already_installed, label_messagebox_information, label_messagebox_title : TLabel;
+  label_wizardform_main, label_messagebox_main, label_wizardform_more_product_already_installed, label_messagebox_information, label_messagebox_title, label_wizardform_title : TLabel;
   image_wizardform_background, image_messagebox_background, image_progressbar_background, image_progressbar_foreground, PBOldProc : LONGINT;
   button_license, button_minimize, button_close, button_browse, button_setup_or_next, button_customize_setup, button_uncustomize_setup, checkbox_license, checkbox_setdefault, button_messagebox_close, button_messagebox_ok, button_messagebox_cancel : HWND;
   is_wizardform_show_normal, is_installer_initialized, is_platform_windows_7, is_wizardform_released, can_exit_setup : BOOLEAN;
@@ -430,6 +430,22 @@ BEGIN
     CancelButton.Height := 0;
     BackButton.Visible := FALSE;
   END;
+  label_wizardform_title := TLabel.Create(WizardForm);
+  WITH label_wizardform_title DO
+  BEGIN
+    Parent := WizardForm;
+    AutoSize := FALSE;
+    Left := 10;
+    Top := 5;
+    Width := 200;
+    Height := 20;
+    Font.Name := '微软雅黑';
+    Font.Size := 9;
+    Font.Color := clWhite;
+    Caption := '{#MyAppName} V{#MyAppVersion} 安装';
+    Transparent := TRUE;
+    OnMouseDown := @wizardform_on_mouse_down;
+  END;
   label_wizardform_more_product_already_installed := TLabel.Create(WizardForm);
   WITH label_wizardform_more_product_already_installed DO
   BEGIN
@@ -580,6 +596,12 @@ BEGIN
     gdipShutdown();
     IF is_installer_initialized THEN
     BEGIN
+      ImgRelease(image_wizardform_background);
+      ImgRelease(image_progressbar_background);
+      ImgRelease(image_progressbar_foreground);
+      ImgRelease(image_messagebox_background);
+      gdipShutdown();
+      messagebox_close.Release();
       WizardForm.Release();
     END;
   END;
