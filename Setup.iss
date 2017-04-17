@@ -78,11 +78,28 @@ UninstallDisplayIcon={uninstallexe},0
 ;ChangesAssociations=yes
 
 [Languages]
-Name: "default"; MessagesFile: ".\Languages\ChineseSimplified.isl"
+Name: "zh_CN"; MessagesFile: ".\lang\zh-CN.isl"
 
 [Files]
-Source: ".\tmp\*"; DestDir: "{tmp}"; Flags: dontcopy solidbreak nocompression; Attribs: hidden system
 Source: ".\app\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: ".\tmp\botva2.dll"; DestDir: "{tmp}\botva2.dll"; Flags: dontcopy solidbreak nocompression; Attribs: hidden system
+Source: ".\tmp\InnoCallback.dll"; DestDir: "{tmp}\InnoCallback.dll"; Flags: dontcopy solidbreak nocompression; Attribs: hidden system
+Source: ".\tmp\background_finish.png"; DestDir: "{tmp}\background_finish.png"; Flags: dontcopy solidbreak nocompression; Attribs: hidden system
+Source: ".\tmp\background_installing.png"; DestDir: "{tmp}\background_installing.png"; Flags: dontcopy solidbreak nocompression; Attribs: hidden system
+Source: ".\tmp\background_welcome.png"; DestDir: "{tmp}\background_welcome.png"; Flags: dontcopy solidbreak nocompression; Attribs: hidden system
+Source: ".\tmp\background_welcome_more.png"; DestDir: "{tmp}\background_welcome_more.png"; Flags: dontcopy solidbreak nocompression; Attribs: hidden system
+Source: ".\tmp\button_browse.png"; DestDir: "{tmp}\button_browse.png"; Flags: dontcopy solidbreak nocompression; Attribs: hidden system
+Source: ".\tmp\button_close.png"; DestDir: "{tmp}\button_close.png"; Flags: dontcopy solidbreak nocompression; Attribs: hidden system
+Source: ".\tmp\button_customize_setup.png"; DestDir: "{tmp}\button_customize_setup.png"; Flags: dontcopy solidbreak nocompression; Attribs: hidden system
+Source: ".\tmp\button_finish.png"; DestDir: "{tmp}\button_finish.png"; Flags: dontcopy solidbreak nocompression; Attribs: hidden system
+Source: ".\tmp\button_license.png"; DestDir: "{tmp}\button_license.png"; Flags: dontcopy solidbreak nocompression; Attribs: hidden system
+Source: ".\tmp\button_minimize.png"; DestDir: "{tmp}\button_minimize.png"; Flags: dontcopy solidbreak nocompression; Attribs: hidden system
+Source: ".\tmp\button_setup_or_next.png"; DestDir: "{tmp}\button_setup_or_next.png"; Flags: dontcopy solidbreak nocompression; Attribs: hidden system
+Source: ".\tmp\button_uncustomize_setup.png"; DestDir: "{tmp}\button_uncustomize_setup.png"; Flags: dontcopy solidbreak nocompression; Attribs: hidden system
+Source: ".\tmp\checkbox_license.png"; DestDir: "{tmp}\checkbox_license.png"; Flags: dontcopy solidbreak nocompression; Attribs: hidden system
+Source: ".\tmp\checkbox_setdefault.png"; DestDir: "{tmp}\checkbox_setdefault.png"; Flags: dontcopy solidbreak nocompression; Attribs: hidden system
+Source: ".\tmp\progressbar_background.png"; DestDir: "{tmp}\progressbar_background.png"; Flags: dontcopy solidbreak nocompression; Attribs: hidden system
+Source: ".\tmp\progressbar_foreground.png"; DestDir: "{tmp}\progressbar_foreground.png"; Flags: dontcopy solidbreak nocompression; Attribs: hidden system
 
 ;若有写入注册表条目的需要，请取消此区段的注释并自行添加相关脚本
 ;[Registry]
@@ -116,6 +133,7 @@ VAR
   button_license, button_minimize, button_close, button_browse, button_setup_or_next, button_customize_setup, button_uncustomize_setup, checkbox_license, checkbox_setdefault : HWND;
   is_wizardform_show_normal, is_installer_initialized, is_platform_windows_7, is_wizardform_released : BOOLEAN;
   edit_target_path : TEdit;
+  version_installed_before : EXTENDED;
 
 TYPE
   TBtnEventProc = PROCEDURE(h : HWND);
@@ -143,6 +161,7 @@ FUNCTION  ReleaseCapture() : LONGINT; EXTERNAL 'ReleaseCapture@user32.dll stdcal
 FUNCTION  CreateRoundRectRgn(p1, p2, p3, p4, p5, p6 : INTEGER) : THandle; EXTERNAL 'CreateRoundRectRgn@gdi32 stdcall';
 FUNCTION  SetWindowRgn(h : HWND; hRgn : THandle; bRedraw : BOOLEAN) : INTEGER; EXTERNAL 'SetWindowRgn@user32 stdcall';
 
+//调用这个函数可以使矩形窗口转变为圆角矩形窗口
 PROCEDURE shape_form_round(aForm : TForm; edgeSize : INTEGER);
 VAR
   FormRegion : LONGWORD;
@@ -153,63 +172,47 @@ END;
 
 FUNCTION is_installed_before() : BOOLEAN;
 VAR
-  appInstallPath : STRING;
+  oldVersion : STRING;
 BEGIN
-  appInstallPath := ExpandConstant('{pf}') + '\' + '{#MyAppPublisher}' + '\' + '{#MyAppName}';
   IF is_platform_windows_7 THEN
   BEGIN
     IF IsWin64 THEN
     BEGIN
       IF RegKeyExists(HKEY_LOCAL_MACHINE, PRODUCT_REGISTRY_KEY_64) THEN
       BEGIN
-        IF RegValueExists(HKEY_LOCAL_MACHINE, PRODUCT_REGISTRY_KEY_64, 'InstallLocation') THEN
-        BEGIN
-          RegQueryStringValue(HKEY_LOCAL_MACHINE, PRODUCT_REGISTRY_KEY_64, 'InstallLocation', appInstallPath);
-          edit_target_path.Text := appInstallPath;
-          Result := TRUE;
-        END ELSE
-        BEGIN
-          Result := FALSE;
-        END;
+        RegQueryStringValue(HKEY_LOCAL_MACHINE, PRODUCT_REGISTRY_KEY_64, 'DisplayVersion', oldVersion);
+        version_installed_before := StrToFloat(oldVersion);
+        Result := TRUE;
       END ELSE
       BEGIN
+        version_installed_before := 0.0;
         Result := FALSE;
       END;
     END ELSE
     BEGIN
       IF RegKeyExists(HKEY_LOCAL_MACHINE, PRODUCT_REGISTRY_KEY_32) THEN
       BEGIN
-        IF RegValueExists(HKEY_LOCAL_MACHINE, PRODUCT_REGISTRY_KEY_32, 'InstallLocation') THEN
-        BEGIN
-          RegQueryStringValue(HKEY_LOCAL_MACHINE, PRODUCT_REGISTRY_KEY_32, 'InstallLocation', appInstallPath);
-          edit_target_path.Text := appInstallPath;
-          Result := TRUE;
-        END ELSE
-        BEGIN
-          Result := FALSE;
-        END;
+        RegQueryStringValue(HKEY_LOCAL_MACHINE, PRODUCT_REGISTRY_KEY_32, 'DisplayVersion', oldVersion);
+        version_installed_before := StrToFloat(oldVersion);
+        Result := TRUE;
       END ELSE
       BEGIN
+        version_installed_before := 0.0;
         Result := FALSE;
       END;
     END;
   END ELSE
   BEGIN
     IF RegKeyExists(HKEY_LOCAL_MACHINE, PRODUCT_REGISTRY_KEY_32) THEN
-    BEGIN
-      IF RegValueExists(HKEY_LOCAL_MACHINE, PRODUCT_REGISTRY_KEY_32, 'InstallLocation') THEN
       BEGIN
-        RegQueryStringValue(HKEY_LOCAL_MACHINE, PRODUCT_REGISTRY_KEY_32, 'InstallLocation', appInstallPath);
-        edit_target_path.Text := appInstallPath;
+        RegQueryStringValue(HKEY_LOCAL_MACHINE, PRODUCT_REGISTRY_KEY_32, 'DisplayVersion', oldVersion);
+        version_installed_before := StrToFloat(oldVersion);
         Result := TRUE;
       END ELSE
       BEGIN
+        version_installed_before := 0.0;
         Result := FALSE;
       END;
-    END ELSE
-    BEGIN
-      Result := FALSE;
-    END;
   END;
 END;
 
@@ -332,7 +335,7 @@ BEGIN
   SendMessage(WizardForm.Handle, WM_SYSCOMMAND, $F012, 0);
 END;
 
-FUNCTION InitializeSetup() : BOOLEAN;
+PROCEDURE determine_wether_is_windows_7_or_not();
 VAR
   sysVersion : TWindowsVersion;
 BEGIN
@@ -344,7 +347,24 @@ BEGIN
   BEGIN
     is_platform_windows_7 := FALSE;
   END;
-  Result := TRUE;
+END;
+
+FUNCTION InitializeSetup() : BOOLEAN;
+BEGIN
+  IF is_installed_before() THEN
+  BEGIN
+    IF (version_installed_before > {#MyAppVersion}) THEN
+    BEGIN
+      MsgBox('您已安装更新版本的“{#MyAppName}”，不允许使用旧版本替换新版本，请单击“确定”按钮退出此安装程序。', mbInformation, MB_OK);
+      Result := FALSE;
+    END ELSE
+    BEGIN
+      Result := TRUE;
+    END;
+  END ELSE
+  BEGIN
+    Result := TRUE;
+  END;
 END;
 
 PROCEDURE InitializeWizard();
@@ -352,6 +372,7 @@ BEGIN
   is_installer_initialized := TRUE;
   is_wizardform_show_normal := TRUE;
   is_wizardform_released := FALSE;
+  determine_wether_is_windows_7_or_not();
   WizardForm.OuterNotebook.Hide;
   WizardForm.Bevel.Hide;
   WITH WizardForm DO
@@ -364,19 +385,6 @@ BEGIN
     NextButton.Height := 0;
     CancelButton.Height := 0;
     BackButton.Visible := FALSE;
-  END;
-  label_wizardform_main := TLabel.Create(WizardForm);
-  WITH label_wizardform_main DO
-  BEGIN
-    Parent := WizardForm;
-    AutoSize := FALSE;
-    Left := 0;
-    Top := 0;
-    Width := WizardForm.Width;
-    Height := WizardForm.Height;
-    Caption := '';
-    Transparent := TRUE;
-    OnMouseDown := @wizard_form_on_mouse_down;
   END;
   label_wizardform_more_product_already_installed := TLabel.Create(WizardForm);
   WITH label_wizardform_more_product_already_installed DO
@@ -394,6 +402,19 @@ BEGIN
     Transparent := TRUE;
   END;
   label_wizardform_more_product_already_installed.Hide;
+  label_wizardform_main := TLabel.Create(WizardForm);
+  WITH label_wizardform_main DO
+  BEGIN
+    Parent := WizardForm;
+    AutoSize := FALSE;
+    Left := 0;
+    Top := 0;
+    Width := WizardForm.Width;
+    Height := WizardForm.Height;
+    Caption := '';
+    Transparent := TRUE;
+    OnMouseDown := @wizard_form_on_mouse_down;
+  END;
   edit_target_path:= TEdit.Create(WizardForm);
   WITH edit_target_path DO
   BEGIN

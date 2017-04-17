@@ -1,13 +1,14 @@
 ; *** Inno Setup version 5.5.3+ Chinese (Simplified) messages ***
-;   By Qiming Li (qiming at clault.com)
-;
-; To download user-contributed translations of this file, go to:
-;   http://www.jrsoftware.org/files/istrans/
-;
-; Note: When translating this text, do not add periods (.) to the end of
-; messages that didn't have them already, because on those messages Inno
-; Setup adds the periods automatically (appending a period would result in
-; two periods being displayed).
+;                                                               ;
+; Translated by Qiming Li (qiming at clault.com)                ;
+;                                                               ;
+; 翻译文件官方下载地址：                                        ;
+; http://www.jrsoftware.org/files/istrans/                      ;
+;                                                               ;
+; 赵宇航对此文件（简体中文翻译文件 ChineseSimplified.isl）      ;
+; 的原始版本进行了部分修改                                      ;
+;                                                               ;
+;****************************************************************
 
 [LangOptions]
 ; The following three entries are very important. Be sure to read and 
@@ -18,7 +19,7 @@ LanguageCodePage=936
 ; If the language you are translating to requires special font faces or
 ; sizes, uncomment any of the following entries and change them accordingly.
 DialogFontName=微软雅黑
-;DialogFontSize=8
+DialogFontSize=9
 ;WelcomeFontName=Verdana
 ;WelcomeFontSize=12
 ;TitleFontName=Arial
