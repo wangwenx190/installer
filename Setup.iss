@@ -75,6 +75,7 @@ AppMutex={#MyAppName}
 ShowLanguageDialog=no
 UninstallDisplayName={#MyAppName}
 UninstallDisplayIcon={uninstallexe},0
+UninstallFilesDir={app}\Uninstaller
 ;ChangesAssociations=yes
 
 [Languages]
@@ -104,6 +105,13 @@ Source: ".\tmp\checkbox_setdefault.png"; DestDir: "{tmp}\checkbox_setdefault.png
 Source: ".\tmp\progressbar_background.png"; DestDir: "{tmp}\progressbar_background.png"; Flags: dontcopy solidbreak nocompression; Attribs: hidden system
 Source: ".\tmp\progressbar_foreground.png"; DestDir: "{tmp}\progressbar_foreground.png"; Flags: dontcopy solidbreak nocompression; Attribs: hidden system
 
+[Dirs]
+Name: "{app}\Uninstaller"; Attribs: hidden system
+
+;若有写入INI条目的需要，请取消此区段的注释并自行添加相关脚本
+;[INI] 
+;Filename: "{app}\MyProg.ini"; Section: "InstallSettings"; Key: "InstallPath"; String: "{app}"; Flags: uninsdeleteentry
+
 ;若有写入注册表条目的需要，请取消此区段的注释并自行添加相关脚本
 ;[Registry]
 ;Root: HKCU; Subkey: "Software\My Company"; Flags: uninsdeletekeyifempty
@@ -131,7 +139,7 @@ CONST
   WIZARDFORM_HEIGHT_MORE = 503;
 
 VAR
-  label_wizardform_main, label_messagebox_main, label_wizardform_more_product_already_installed, label_messagebox_information, label_messagebox_title, label_wizardform_title : TLabel;
+  label_wizardform_main, label_messagebox_main, label_wizardform_more_product_already_installed, label_messagebox_information, label_messagebox_title, label_wizardform_title, label_install_progress : TLabel;
   image_wizardform_background, image_messagebox_background, image_progressbar_background, image_progressbar_foreground, PBOldProc : LONGINT;
   button_license, button_minimize, button_close, button_browse, button_setup_or_next, button_customize_setup, button_uncustomize_setup, checkbox_license, checkbox_setdefault, button_messagebox_close, button_messagebox_ok, button_messagebox_cancel : HWND;
   is_wizardform_show_normal, is_installer_initialized, is_platform_windows_7, is_wizardform_released, can_exit_setup : BOOLEAN;
@@ -237,7 +245,7 @@ BEGIN
   BEGIN
     WizardForm.Height := WIZARDFORM_HEIGHT_MORE;
     image_wizardform_background := ImgLoad(WizardForm.Handle, ExpandConstant('{tmp}\background_welcome_more.png'), 0, 0, WIZARDFORM_WIDTH_NORMAL, WIZARDFORM_HEIGHT_MORE, FALSE, TRUE);
-    edit_target_path.Show;
+    edit_target_path.Show();
     BtnSetVisibility(button_browse, TRUE);
     BtnSetVisibility(checkbox_setdefault, TRUE);
     BtnSetVisibility(button_customize_setup, FALSE);
@@ -246,13 +254,13 @@ BEGIN
     BEGIN
       edit_target_path.Enabled := FALSE;
       BtnSetEnabled(button_browse, FALSE);
-      label_wizardform_more_product_already_installed.Show;
+      label_wizardform_more_product_already_installed.Show();
     END;
     is_wizardform_show_normal := FALSE;
   END ELSE
   BEGIN
-    edit_target_path.Hide;
-    label_wizardform_more_product_already_installed.Hide;
+    edit_target_path.Hide();
+    label_wizardform_more_product_already_installed.Hide();
     BtnSetVisibility(button_browse, FALSE);
     BtnSetVisibility(checkbox_setdefault, FALSE);
     WizardForm.Height := WIZARDFORM_HEIGHT_NORMAL;
@@ -312,15 +320,19 @@ END;
 FUNCTION PBProc(h : hWnd; Msg, wParam, lParam : LONGINT) : LONGINT;
 VAR
   pr, i1, i2 : EXTENDED;
-  w : INTEGER;
+  pr2, w : INTEGER;
+  p : STRING;
 BEGIN
   Result := CallWindowProc(PBOldProc, h, Msg, wParam, lParam);
   IF ((Msg = $402) AND (WizardForm.ProgressGauge.Position > WizardForm.ProgressGauge.Min)) THEN
   BEGIN
     i1 := WizardForm.ProgressGauge.Position - WizardForm.ProgressGauge.Min;
     i2 := WizardForm.ProgressGauge.Max - WizardForm.ProgressGauge.Min;
-    pr := i1 * 100 / i2;
-    w := Round(560 * pr / 100);
+    pr := (i1 * 100) / i2;
+    pr2 := Round(pr);
+    p := Format('%d', [pr2]) + '%';
+    label_install_progress.Caption := p;
+    w := Round((560 * pr) / 100);
     ImgSetPosition(image_progressbar_foreground, 20, 374, w, 6);
     ImgSetVisiblePart(image_progressbar_foreground, 0, 0, w, 6);
     ImgApplyChanges(WizardForm.Handle);
@@ -372,6 +384,72 @@ BEGIN
   END;
 END;
 
+PROCEDURE messagebox_close_create();
+BEGIN
+  messagebox_close := CreateCustomForm();
+  WITH messagebox_close DO
+  BEGIN
+    BorderStyle := bsNone;
+    Width := 380;
+    Height := 190;
+    Color := clWhite;
+    Caption := '';
+  END;
+  label_messagebox_title := TLabel.Create(messagebox_close);
+  WITH label_messagebox_title DO
+  BEGIN
+    Parent := messagebox_close;
+    AutoSize := FALSE;
+    Left := 30;
+    Top := 5;
+    Width := 400;
+    Height := 20;
+    Font.Name := 'Microsoft YaHei';
+    Font.Size := 10;
+    Font.Color := clWhite;
+    Caption := '{#MyAppName} 安装';
+    Transparent := TRUE;
+    OnMouseDown := @messagebox_on_mouse_down;
+  END;
+  label_messagebox_information := TLabel.Create(messagebox_close);
+  WITH label_messagebox_information DO
+  BEGIN
+    Parent := messagebox_close;
+    AutoSize := FALSE;
+    Left := 70;
+    Top := 64;
+    Width := 400;
+    Height := 20;
+    Font.Name := 'Microsoft YaHei';
+    Font.Size := 10;
+    Font.Color := clBlack;
+    Caption := '您确定要退出“{#MyAppName}”安装程序？';
+    Transparent := TRUE;
+    OnMouseDown := @messagebox_on_mouse_down;
+  END;
+  label_messagebox_main := TLabel.Create(messagebox_close);
+  WITH label_messagebox_main DO
+  BEGIN
+    Parent := messagebox_close;
+    AutoSize := FALSE;
+    Left := 0;
+    Top := 0;
+    Width := messagebox_close.Width;
+    Height := messagebox_close.Height;
+    Caption := '';
+    Transparent := TRUE;
+    OnMouseDown := @messagebox_on_mouse_down;
+  END;
+  image_messagebox_background := ImgLoad(messagebox_close.Handle, ExpandConstant('{tmp}\background_messagebox.png'), 0, 0, 380, 190, FALSE, TRUE);
+  button_messagebox_close := BtnCreate(messagebox_close.Handle, 350, 0, 30, 30, ExpandConstant('{tmp}\button_close.png'), 0, FALSE);
+  BtnSetEvent(button_messagebox_close, ID_BUTTON_ON_CLICK_EVENT, WrapBtnCallback(@button_messagebox_cancel_on_click, 1));
+  button_messagebox_ok := BtnCreate(messagebox_close.Handle, 206, 150, 76, 28, ExpandConstant('{tmp}\button_ok.png'), 0, FALSE);
+  BtnSetEvent(button_messagebox_ok, ID_BUTTON_ON_CLICK_EVENT, WrapBtnCallback(@button_messagebox_ok_on_click, 1));
+  button_messagebox_cancel := BtnCreate(messagebox_close.Handle, 293, 150, 76, 28, ExpandConstant('{tmp}\button_cancel.png'), 0, FALSE);
+  BtnSetEvent(button_messagebox_cancel, ID_BUTTON_ON_CLICK_EVENT, WrapBtnCallback(@button_messagebox_cancel_on_click, 1));
+  ImgApplyChanges(messagebox_close.Handle);
+END;
+
 PROCEDURE CancelButtonClick(CurPageID : INTEGER; VAR Cancel, Confirm: BOOLEAN);
 BEGIN
   Confirm := FALSE;
@@ -417,8 +495,9 @@ BEGIN
   is_wizardform_show_normal := TRUE;
   is_wizardform_released := FALSE;
   determine_wether_is_windows_7_or_not();
-  WizardForm.OuterNotebook.Hide;
-  WizardForm.Bevel.Hide;
+  WizardForm.InnerNotebook.Hide();
+  WizardForm.OuterNotebook.Hide();
+  WizardForm.Bevel.Hide();
   WITH WizardForm DO
   BEGIN
     BorderStyle := bsNone;
@@ -439,7 +518,7 @@ BEGIN
     Top := 5;
     Width := 200;
     Height := 20;
-    Font.Name := '微软雅黑';
+    Font.Name := 'Microsoft YaHei';
     Font.Size := 9;
     Font.Color := clWhite;
     Caption := '{#MyAppName} V{#MyAppVersion} 安装';
@@ -455,14 +534,14 @@ BEGIN
     Top := 449;
     Width := 200;
     Height := 20;
-    Font.Name := '微软雅黑';
+    Font.Name := 'Microsoft YaHei';
     Font.Size := 9;
     Font.Color := clGray;
     Caption := '软件已经安装，不允许更换目录。';
     Transparent := TRUE;
     OnMouseDown := @wizardform_on_mouse_down;
   END;
-  label_wizardform_more_product_already_installed.Hide;
+  label_wizardform_more_product_already_installed.Hide();
   label_wizardform_main := TLabel.Create(WizardForm);
   WITH label_wizardform_main DO
   BEGIN
@@ -481,7 +560,7 @@ BEGIN
   BEGIN
     Parent := WizardForm;
     Text := WizardForm.DirEdit.Text;
-    Font.Name := '微软雅黑';
+    Font.Name := 'Microsoft YaHei';
     Font.Size := 9;
     BorderStyle := bsNone;
     SetBounds(91,423,402,20);
@@ -489,7 +568,7 @@ BEGIN
     Color := clWhite;
     TabStop := FALSE;
   END;
-  edit_target_path.Hide;
+  edit_target_path.Hide();
   ExtractTemporaryFile('button_customize_setup.png');
   ExtractTemporaryFile('button_uncustomize_setup.png');
   ExtractTemporaryFile('button_finish.png');
@@ -525,68 +604,7 @@ BEGIN
   BtnSetVisibility(button_uncustomize_setup, FALSE);
   PBOldProc := SetWindowLong(WizardForm.ProgressGauge.Handle, -4, PBCallBack(@PBProc, 4));
   ImgApplyChanges(WizardForm.Handle);
-  messagebox_close := CreateCustomForm();
-  WITH messagebox_close DO
-  BEGIN
-    BorderStyle := bsNone;
-    Width := 380;
-    Height := 190;
-    Color := clWhite;
-    Caption := '退出安装向导';
-  END;
-  label_messagebox_title := TLabel.Create(messagebox_close);
-  WITH label_messagebox_title DO
-  BEGIN
-    Parent := messagebox_close;
-    AutoSize := FALSE;
-    Left := 30;
-    Top := 5;
-    Width := 400;
-    Height := 20;
-    Font.Name := '微软雅黑';
-    Font.Size := 10;
-    Font.Color := clWhite;
-    Caption := '{#MyAppName}';
-    Transparent := TRUE;
-    OnMouseDown := @messagebox_on_mouse_down;
-  END;
-  label_messagebox_information := TLabel.Create(messagebox_close);
-  WITH label_messagebox_information DO
-  BEGIN
-    Parent := messagebox_close;
-    AutoSize := FALSE;
-    Left := 70;
-    Top := 64;
-    Width := 400;
-    Height := 20;
-    Font.Name := '微软雅黑';
-    Font.Size := 10;
-    Font.Color := clBlack;
-    Caption := '您确定要退出“{#MyAppName}”安装程序？';
-    Transparent := TRUE;
-    OnMouseDown := @messagebox_on_mouse_down;
-  END;
-  label_messagebox_main := TLabel.Create(messagebox_close);
-  WITH label_messagebox_main DO
-  BEGIN
-    Parent := messagebox_close;
-    AutoSize := FALSE;
-    Left := 0;
-    Top := 0;
-    Width := messagebox_close.Width;
-    Height := messagebox_close.Height;
-    Caption := '';
-    Transparent := TRUE;
-    OnMouseDown := @messagebox_on_mouse_down;
-  END;
-  image_messagebox_background := ImgLoad(messagebox_close.Handle, ExpandConstant('{tmp}\background_messagebox.png'), 0, 0, 380, 190, FALSE, TRUE);
-  button_messagebox_close := BtnCreate(messagebox_close.Handle, 350, 0, 30, 30, ExpandConstant('{tmp}\button_close.png'), 0, FALSE);
-  BtnSetEvent(button_messagebox_close, ID_BUTTON_ON_CLICK_EVENT, WrapBtnCallback(@button_messagebox_cancel_on_click, 1));
-  button_messagebox_ok := BtnCreate(messagebox_close.Handle, 206, 150, 76, 28, ExpandConstant('{tmp}\button_ok.png'), 0, FALSE);
-  BtnSetEvent(button_messagebox_ok, ID_BUTTON_ON_CLICK_EVENT, WrapBtnCallback(@button_messagebox_ok_on_click, 1));
-  button_messagebox_cancel := BtnCreate(messagebox_close.Handle, 293, 150, 76, 28, ExpandConstant('{tmp}\button_cancel.png'), 0, FALSE);
-  BtnSetEvent(button_messagebox_cancel, ID_BUTTON_ON_CLICK_EVENT, WrapBtnCallback(@button_messagebox_cancel_on_click, 1));
-  ImgApplyChanges(messagebox_close.Handle);
+  messagebox_close_create();
 END;
 
 PROCEDURE DeinitializeSetup();
@@ -626,8 +644,8 @@ BEGIN
   END;
   IF (CurPageID = wpInstalling) THEN
   BEGIN
-    edit_target_path.Hide;
-    label_wizardform_more_product_already_installed.Hide;
+    edit_target_path.Hide();
+    label_wizardform_more_product_already_installed.Hide();
     BtnSetVisibility(button_browse, FALSE);
     WizardForm.Height := WIZARDFORM_HEIGHT_NORMAL;
     is_wizardform_show_normal := TRUE;
@@ -636,6 +654,22 @@ BEGIN
     BtnSetVisibility(checkbox_setdefault, FALSE);
     BtnSetVisibility(button_license, FALSE);
     BtnSetVisibility(checkbox_license, FALSE);
+    label_install_progress := TLabel.Create(WizardForm);
+    WITH label_install_progress DO
+    BEGIN
+      Parent := WizardForm;
+      AutoSize := FALSE;
+      Left := 550;
+      Top := 349;
+      Width := 70;
+      Height := 30;
+      Font.Name := 'Microsoft YaHei';
+      Font.Size := 10;
+      Font.Color := clBlack;
+      Caption := '';
+      Transparent := TRUE;
+      OnMouseDown := @wizardform_on_mouse_down;
+    END;
     image_wizardform_background := ImgLoad(WizardForm.Handle, ExpandConstant('{tmp}\background_installing.png'), 0, 0, WIZARDFORM_WIDTH_NORMAL, WIZARDFORM_HEIGHT_NORMAL, FALSE, TRUE);
     image_progressbar_background := ImgLoad(WizardForm.Handle, ExpandConstant('{tmp}\progressbar_background.png'), 20, 374, 560, 6, FALSE, TRUE);
     image_progressbar_foreground := ImgLoad(WizardForm.Handle, ExpandConstant('{tmp}\progressbar_foreground.png'), 20, 374, 0, 0, TRUE, TRUE);
@@ -644,6 +678,8 @@ BEGIN
   END;
   IF (CurPageID = wpFinished) THEN
   BEGIN
+    label_install_progress.Caption := '';
+    label_install_progress.Visible := FALSE;
     ImgSetVisibility(image_progressbar_background, FALSE);
     ImgSetVisibility(image_progressbar_foreground, FALSE);
     button_setup_or_next := BtnCreate(WizardForm.Handle, 214, 305, 180, 44, ExpandConstant('{tmp}\button_finish.png'), 0, FALSE);
@@ -687,5 +723,21 @@ BEGIN
   IF (PageID = wpReady) THEN Result := TRUE;
   IF (PageID = wpPreparing) THEN Result := TRUE;
   IF (PageID = wpInfoAfter) THEN Result := TRUE;
+END;
+
+PROCEDURE CurUninstallStepChanged(CurUninstallStep: TUninstallStep);
+BEGIN
+  IF (CurUninstallStep = usAppMutexCheck) THEN
+  BEGIN
+    //TODO
+  END;
+  IF (CurUninstallStep = usPostUninstall) THEN
+  BEGIN
+    //TODO
+  END;
+  IF (CurUninstallStep = usDone) THEN
+  BEGIN
+    //TODO
+  END;
 END;
 

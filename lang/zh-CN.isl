@@ -18,7 +18,7 @@ LanguageID=$0804
 LanguageCodePage=936
 ; If the language you are translating to requires special font faces or
 ; sizes, uncomment any of the following entries and change them accordingly.
-DialogFontName=Î¢ÈíÑÅºÚ
+DialogFontName=Microsoft YaHei
 DialogFontSize=9
 ;WelcomeFontName=Verdana
 ;WelcomeFontSize=12
