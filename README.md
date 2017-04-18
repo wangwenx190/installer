@@ -28,8 +28,8 @@
 ![04](/Snapshot/04.PNG)
 
 ## 支持平台
-* 此脚本打包的安装程序已在**Microsoft Windows 7 SP1、Windows 8.1 with Update 1 以及 Windows 10 1703 32位&64位操作系统**上测试通过，目标功能全部完美实现，无任何BUG
-* 若要使安装程序支持更早版本的操作系统，请注释掉代码中的`#define Windows7SP1AndNewer`，但不能保证安装程序的最终效果
+* 此脚本打包的安装程序已在**Microsoft Windows XP SP3（仅32位）、Windows 7 SP1、Windows 8.1 with Update 1 以及 Windows 10 1703 32位&64位操作系统**上测试通过，目标功能全部完美实现，无任何BUG
+* 若要使安装程序支持更早版本的操作系统（例如 Windows XP），请注释掉代码中的`#define Windows7SP1AndNewer`，目标效果和功能同样能全部完美实现，无任何BUG
 
 ## 编译
 1. 下载我提供的这个脚本模板（包含所有资源文件）并解压
