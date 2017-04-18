@@ -18,8 +18,30 @@
   #error 请使用 Unicode 版 Inno Setup 编译器
 #endif
 
-#define MyAppID "{751134E2-9659-4800-B491-787AF330DAED}"
-#define MyAppName "My Program"
+;指定是否为64位安装程序
+;#define x64Build
+
+;指定是否只能在 Windows 7 SP1 及更新版本的操作系统上安装
+#define Windows7SP1AndNewer
+
+;指定是否要注册相关后缀名
+;#define RegisteAssociations
+
+;指定是否为绿色版安装程序（仅释放文件，不写入注册表条目，也不生成卸载程序）
+;#define PortableBuild 
+
+#ifdef x64Build
+  #define MyAppID "{D5FB0325-ED97-46CD-B11C-A199551F529C}"
+  #define MyAppName "My Program" + " " + "x64"
+  #define MyAppExeName "MyProg64.exe"
+  #define MyAppMutex MyAppName
+#else
+  #define MyAppID "{BDEF4E0C-B337-49C7-8D85-51B8505235FF}"
+  #define MyAppName "My Program"
+  #define MyAppExeName "MyProg.exe"
+  #define MyAppMutex MyAppName
+#endif
+
 #define MyAppVersion "1.5"
 #define MyAppPublisher "My Company, Inc."
 #define MyAppPublisherURL "http://www.example.com/"
@@ -32,7 +54,6 @@
 #define MyAppLicenseURL "https://github.com/wangwenx190/InternetFashionedInstaller/blob/master/LICENSE"
 #define MyAppCopyrightYear "2017"
 #define MyAppCopyright "版权所有 © " + MyAppCopyrightYear + ", " + MyAppPublisher
-#define MyAppExeName "MyProg.exe"
 
 [Setup]
 AppId={{#MyAppID}
@@ -48,7 +69,6 @@ AppContact={#MyAppContact}
 AppSupportPhone={#MyAppSupportPhone}
 AppReadmeFile={#MyAppReadmeURL}
 AppCopyright={#MyAppCopyright}
-DefaultDirName={pf}\{#MyAppPublisher}\{#MyAppName}
 DefaultGroupName={#MyAppPublisher}\{#MyAppName}
 OutputBaseFilename={#MyAppName}_{#MyAppVersion}_Setup
 VersionInfoDescription={#MyAppName} 安装程序
@@ -67,16 +87,36 @@ SolidCompression=yes
 DisableProgramGroupPage=yes
 DisableDirPage=yes
 DisableReadyPage=yes
-MinVersion=0,6.1.7601
 TimeStampsInUTC=yes
-Uninstallable=yes
 SetupMutex={{#MyAppID}Installer,Global\{{#MyAppID}Installer
-AppMutex={#MyAppName}
+AppMutex={#MyAppMutex}
 ShowLanguageDialog=no
+#ifdef x64Build
+ArchitecturesAllowed=x64
+ArchitecturesInstallIn64BitMode=x64
+DefaultDirName={pf64}\{#MyAppPublisher}\{#MyAppName}
+#else
+ArchitecturesAllowed=x86
+DefaultDirName={pf32}\{#MyAppPublisher}\{#MyAppName}
+#endif
+#ifdef Windows7SP1AndNewer
+MinVersion=0,6.1.7601
+#else
+MinVersion=0,5.1.2600
+#endif
+#ifdef RegisteAssociations
+ChangesAssociations=yes
+#else
+ChangesAssociations=no
+#endif
+#ifdef PortableBuild
+Uninstallable=no
+#else
+Uninstallable=yes
 UninstallDisplayName={#MyAppName}
 UninstallDisplayIcon={uninstallexe},0
 UninstallFilesDir={app}\Uninstaller
-;ChangesAssociations=yes
+#endif
 
 [Languages]
 Name: "zh_CN"; MessagesFile: ".\lang\zh-CN.isl"
@@ -101,12 +141,16 @@ Source: ".\tmp\button_ok.png"; DestDir: "{tmp}\button_ok.png"; Flags: dontcopy s
 Source: ".\tmp\button_setup_or_next.png"; DestDir: "{tmp}\button_setup_or_next.png"; Flags: dontcopy solidbreak nocompression; Attribs: hidden system
 Source: ".\tmp\button_uncustomize_setup.png"; DestDir: "{tmp}\button_uncustomize_setup.png"; Flags: dontcopy solidbreak nocompression; Attribs: hidden system
 Source: ".\tmp\checkbox_license.png"; DestDir: "{tmp}\checkbox_license.png"; Flags: dontcopy solidbreak nocompression; Attribs: hidden system
+#ifdef RegisteAssociations
 Source: ".\tmp\checkbox_setdefault.png"; DestDir: "{tmp}\checkbox_setdefault.png"; Flags: dontcopy solidbreak nocompression; Attribs: hidden system
+#endif
 Source: ".\tmp\progressbar_background.png"; DestDir: "{tmp}\progressbar_background.png"; Flags: dontcopy solidbreak nocompression; Attribs: hidden system
 Source: ".\tmp\progressbar_foreground.png"; DestDir: "{tmp}\progressbar_foreground.png"; Flags: dontcopy solidbreak nocompression; Attribs: hidden system
 
+#ifndef PortableBuild
 [Dirs]
 Name: "{app}\Uninstaller"; Attribs: hidden system
+#endif
 
 ;若有写入INI条目的需要，请取消此区段的注释并自行添加相关脚本
 ;[INI] 
@@ -125,8 +169,15 @@ Name: "{app}\Uninstaller"; Attribs: hidden system
 ;Name: "{group}\My Program"; Filename: "{app}\MYPROG.EXE"; Parameters: "/play filename.mid"; WorkingDir: "{app}"; Comment: "This is my program"; IconFilename: "{app}\myicon.ico"
 ;Name: "{group}\Documents"; Filename: "{app}\Doc"; Flags: foldershortcut
 
+#ifdef RegisteAssociations
+[UninstallRun]
+Filename: "{app}\{#MyAppExeName}"; Parameters: "--uninstall"; WorkingDir: "{app}"; Flags: waituntilterminated skipifdoesntexist
+#endif
+
+#ifndef PortableBuild
 [UninstallDelete]
 Type: filesandordirs; Name: "{app}"
+#endif
 
 [Code]
 CONST
@@ -142,7 +193,7 @@ VAR
   label_wizardform_main, label_messagebox_main, label_wizardform_more_product_already_installed, label_messagebox_information, label_messagebox_title, label_wizardform_title, label_install_progress : TLabel;
   image_wizardform_background, image_messagebox_background, image_progressbar_background, image_progressbar_foreground, PBOldProc : LONGINT;
   button_license, button_minimize, button_close, button_browse, button_setup_or_next, button_customize_setup, button_uncustomize_setup, checkbox_license, checkbox_setdefault, button_messagebox_close, button_messagebox_ok, button_messagebox_cancel : HWND;
-  is_wizardform_show_normal, is_installer_initialized, is_platform_windows_7, is_wizardform_released, can_exit_setup : BOOLEAN;
+  is_wizardform_show_normal, is_installer_initialized, is_platform_windows_7, is_wizardform_released, can_exit_setup, need_to_change_associations : BOOLEAN;
   edit_target_path : TEdit;
   version_installed_before : EXTENDED;
   messagebox_close : TSetupForm;
@@ -247,7 +298,9 @@ BEGIN
     image_wizardform_background := ImgLoad(WizardForm.Handle, ExpandConstant('{tmp}\background_welcome_more.png'), 0, 0, WIZARDFORM_WIDTH_NORMAL, WIZARDFORM_HEIGHT_MORE, FALSE, TRUE);
     edit_target_path.Show();
     BtnSetVisibility(button_browse, TRUE);
+#ifdef RegisteAssociations
     BtnSetVisibility(checkbox_setdefault, TRUE);
+#endif
     BtnSetVisibility(button_customize_setup, FALSE);
     BtnSetVisibility(button_uncustomize_setup, TRUE);
     IF is_installed_before() THEN
@@ -262,7 +315,9 @@ BEGIN
     edit_target_path.Hide();
     label_wizardform_more_product_already_installed.Hide();
     BtnSetVisibility(button_browse, FALSE);
+#ifdef RegisteAssociations
     BtnSetVisibility(checkbox_setdefault, FALSE);
+#endif
     WizardForm.Height := WIZARDFORM_HEIGHT_NORMAL;
     image_wizardform_background := ImgLoad(WizardForm.Handle, ExpandConstant('{tmp}\background_welcome.png'), 0, 0, WIZARDFORM_WIDTH_NORMAL, WIZARDFORM_HEIGHT_NORMAL, FALSE, TRUE);
     BtnSetVisibility(button_customize_setup, TRUE);
@@ -296,12 +351,18 @@ END;
 
 PROCEDURE checkbox_setdefault_on_click(hBtn : HWND);
 BEGIN
-  //TODO
+  IF BtnGetChecked(checkbox_setdefault) THEN
+  BEGIN
+    need_to_change_associations := TRUE;  
+  END ELSE
+  BEGIN
+    need_to_change_associations := FALSE;
+  END;
 END;
 
 FUNCTION is_setdefault_checkbox_checked() : BOOLEAN;
 BEGIN
-  Result := BtnGetChecked(checkbox_setdefault);
+  Result := need_to_change_associations;
 END;
 
 PROCEDURE check_if_need_change_associations();
@@ -331,6 +392,17 @@ BEGIN
     pr := (i1 * 100) / i2;
     pr2 := Round(pr);
     p := Format('%d', [pr2]) + '%';
+    IF (pr2 < 10) THEN
+    BEGIN
+      p := '  ' + Trim(p);
+    END
+    ELSE IF ((pr2 >= 10) AND (pr2 < 100)) THEN
+    BEGIN
+      p := ' ' + Trim(p);
+    END ELSE
+    BEGIN
+      p := Trim(p);
+    END;
     label_install_progress.Caption := p;
     w := Round((560 * pr) / 100);
     ImgSetPosition(image_progressbar_foreground, 20, 374, w, 6);
@@ -494,6 +566,7 @@ BEGIN
   is_installer_initialized := TRUE;
   is_wizardform_show_normal := TRUE;
   is_wizardform_released := FALSE;
+  need_to_change_associations := TRUE;
   determine_wether_is_windows_7_or_not();
   WizardForm.InnerNotebook.Hide();
   WizardForm.OuterNotebook.Hide();
@@ -580,7 +653,9 @@ BEGIN
   ExtractTemporaryFile('progressbar_foreground.png');
   ExtractTemporaryFile('button_license.png');
   ExtractTemporaryFile('checkbox_license.png');
+#ifdef RegisteAssociations
   ExtractTemporaryFile('checkbox_setdefault.png');
+#endif
   ExtractTemporaryFile('background_installing.png');
   ExtractTemporaryFile('background_finish.png');
   ExtractTemporaryFile('button_close.png');
@@ -635,10 +710,12 @@ BEGIN
     checkbox_license := BtnCreate(WizardForm.Handle, 11, 374, 93, 17, ExpandConstant('{tmp}\checkbox_license.png'), 0, TRUE);
     BtnSetEvent(checkbox_license, ID_BUTTON_ON_CLICK_EVENT, WrapBtnCallback(@checkbox_license_on_click, 1));
     BtnSetChecked(checkbox_license, TRUE);
+#ifdef RegisteAssociations
     checkbox_setdefault := BtnCreate(WizardForm.Handle, 85, 470, 92, 17, ExpandConstant('{tmp}\checkbox_setdefault.png'), 0, TRUE);
     BtnSetEvent(checkbox_setdefault, ID_BUTTON_ON_CLICK_EVENT, WrapBtnCallback(@checkbox_setdefault_on_click, 1));
     BtnSetChecked(checkbox_setdefault, TRUE);
     BtnSetVisibility(checkbox_setdefault, FALSE);
+#endif
     WizardForm.Height := WIZARDFORM_HEIGHT_NORMAL;
     ImgApplyChanges(WizardForm.Handle);
   END;
@@ -651,7 +728,9 @@ BEGIN
     is_wizardform_show_normal := TRUE;
     BtnSetVisibility(button_customize_setup, FALSE);
     BtnSetVisibility(button_uncustomize_setup, FALSE);
+#ifdef RegisteAssociations
     BtnSetVisibility(checkbox_setdefault, FALSE);
+#endif
     BtnSetVisibility(button_license, FALSE);
     BtnSetVisibility(checkbox_license, FALSE);
     label_install_progress := TLabel.Create(WizardForm);
@@ -694,7 +773,9 @@ PROCEDURE CurStepChanged(CurStep : TSetupStep);
 BEGIN
   IF (CurStep = ssPostInstall) THEN
   BEGIN
+#ifdef RegisteAssociations
     check_if_need_change_associations();
+#endif
     //AND DO OTHER THINGS
   END;
   IF (CurStep = ssDone) THEN
@@ -723,21 +804,5 @@ BEGIN
   IF (PageID = wpReady) THEN Result := TRUE;
   IF (PageID = wpPreparing) THEN Result := TRUE;
   IF (PageID = wpInfoAfter) THEN Result := TRUE;
-END;
-
-PROCEDURE CurUninstallStepChanged(CurUninstallStep: TUninstallStep);
-BEGIN
-  IF (CurUninstallStep = usAppMutexCheck) THEN
-  BEGIN
-    //TODO
-  END;
-  IF (CurUninstallStep = usPostUninstall) THEN
-  BEGIN
-    //TODO
-  END;
-  IF (CurUninstallStep = usDone) THEN
-  BEGIN
-    //TODO
-  END;
 END;
 

@@ -75,7 +75,7 @@ ExitSetupMessage=安装尚未完成。如果现在退出，程序将不会被安装。 %n%n您可以下次再
 AboutSetupMenuItem=关于安装向导(&A)…
 AboutSetupTitle=关于安装向导
 AboutSetupMessage=%1版本%2%n%3%n%n%1主页：%n%4
-AboutSetupNote=安装程序制作：赵宇航
+AboutSetupNote=安装程序脚本编写：赵宇航以及其他做出过贡献的热心网友。
 TranslatorNote=Translated by Qiming Li (qiming at clault.com)
 
 ; *** Buttons
