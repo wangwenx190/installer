@@ -70,7 +70,6 @@ AppSupportPhone={#MyAppSupportPhone}
 AppReadmeFile={#MyAppReadmeURL}
 AppCopyright={#MyAppCopyright}
 DefaultGroupName={#MyAppPublisher}\{#MyAppName}
-OutputBaseFilename={#MyAppName}_{#MyAppVersion}_Setup
 VersionInfoDescription={#MyAppName} 安装程序
 VersionInfoProductName={#MyAppName}
 VersionInfoCompany={#MyAppPublisher}
@@ -111,8 +110,12 @@ ChangesAssociations=no
 #endif
 #ifdef PortableBuild
 Uninstallable=no
+PrivilegesRequired=lowest
+OutputBaseFilename={#MyAppName}_{#MyAppVersion}_Portable
 #else
 Uninstallable=yes
+PrivilegesRequired=admin
+OutputBaseFilename={#MyAppName}_{#MyAppVersion}_Setup
 UninstallDisplayName={#MyAppName}
 UninstallDisplayIcon={uninstallexe},0
 UninstallFilesDir={app}\Uninstaller
@@ -238,6 +241,7 @@ FUNCTION is_installed_before() : BOOLEAN;
 VAR
   oldVersion : STRING;
 BEGIN
+#ifndef x64Build
   IF is_platform_windows_7 THEN
   BEGIN
     IF IsWin64 THEN
@@ -278,6 +282,18 @@ BEGIN
         Result := FALSE;
       END;
   END;
+#else
+  IF RegKeyExists(HKEY_LOCAL_MACHINE, PRODUCT_REGISTRY_KEY_32) THEN
+  BEGIN
+    RegQueryStringValue(HKEY_LOCAL_MACHINE, PRODUCT_REGISTRY_KEY_32, 'DisplayVersion', oldVersion);
+    version_installed_before := StrToFloat(oldVersion);
+    Result := TRUE;
+  END ELSE
+  BEGIN
+    version_installed_before := 0.0;
+    Result := FALSE;
+  END;
+#endif
 END;
 
 PROCEDURE button_close_on_click(hBtn : HWND);
@@ -303,12 +319,14 @@ BEGIN
 #endif
     BtnSetVisibility(button_customize_setup, FALSE);
     BtnSetVisibility(button_uncustomize_setup, TRUE);
+#ifndef PortableBuild
     IF is_installed_before() THEN
     BEGIN
       edit_target_path.Enabled := FALSE;
       BtnSetEnabled(button_browse, FALSE);
       label_wizardform_more_product_already_installed.Show();
     END;
+#endif
     is_wizardform_show_normal := FALSE;
   END ELSE
   BEGIN
@@ -370,6 +388,7 @@ BEGIN
   IF is_setdefault_checkbox_checked() THEN
   BEGIN
     //TODO
+    MsgBox('此处执行注册文件后缀名的操作。', mbInformation, MB_OK);
   END;
 END;
 
@@ -545,6 +564,7 @@ END;
 
 FUNCTION InitializeSetup() : BOOLEAN;
 BEGIN
+#ifndef PortableBuild
   IF is_installed_before() THEN
   BEGIN
     IF (version_installed_before > {#MyAppVersion}) THEN
@@ -559,6 +579,9 @@ BEGIN
   BEGIN
     Result := TRUE;
   END;
+#else
+  Result := TRUE;
+#endif
 END;
 
 PROCEDURE InitializeWizard();
@@ -738,9 +761,9 @@ BEGIN
     BEGIN
       Parent := WizardForm;
       AutoSize := FALSE;
-      Left := 549;
+      Left := 547;
       Top := 349;
-      Width := 70;
+      Width := 100;
       Height := 30;
       Font.Name := 'Microsoft YaHei';
       Font.Size := 10;
