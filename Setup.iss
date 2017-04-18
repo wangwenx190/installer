@@ -96,7 +96,7 @@ ArchitecturesAllowed=x64
 ArchitecturesInstallIn64BitMode=x64
 DefaultDirName={pf64}\{#MyAppPublisher}\{#MyAppName}
 #else
-ArchitecturesAllowed=x86
+ArchitecturesAllowed=x86 x64
 DefaultDirName={pf32}\{#MyAppPublisher}\{#MyAppName}
 #endif
 #ifdef Windows7SP1AndNewer
@@ -738,7 +738,7 @@ BEGIN
     BEGIN
       Parent := WizardForm;
       AutoSize := FALSE;
-      Left := 550;
+      Left := 549;
       Top := 349;
       Width := 70;
       Height := 30;
