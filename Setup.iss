@@ -85,11 +85,13 @@ InternalCompressLevel=ultra64
 SolidCompression=yes
 DisableProgramGroupPage=yes
 DisableDirPage=yes
+DisableReadyMemo=yes
 DisableReadyPage=yes
 TimeStampsInUTC=yes
 SetupMutex={{#MyAppID}Installer,Global\{{#MyAppID}Installer
 AppMutex={#MyAppMutex}
 ShowLanguageDialog=no
+AllowCancelDuringInstall=no
 #ifdef x64Build
 ArchitecturesAllowed=x64
 ArchitecturesInstallIn64BitMode=x64
@@ -751,6 +753,8 @@ BEGIN
     is_wizardform_show_normal := TRUE;
     BtnSetVisibility(button_customize_setup, FALSE);
     BtnSetVisibility(button_uncustomize_setup, FALSE);
+    BtnSetVisibility(button_close, FALSE);
+    BtnSetPosition(button_minimize, 570, 0, 30, 30);
 #ifdef RegisteAssociations
     BtnSetVisibility(checkbox_setdefault, FALSE);
 #endif
@@ -784,6 +788,8 @@ BEGIN
     label_install_progress.Visible := FALSE;
     ImgSetVisibility(image_progressbar_background, FALSE);
     ImgSetVisibility(image_progressbar_foreground, FALSE);
+    BtnSetPosition(button_minimize, 540, 0, 30, 30);
+    BtnSetVisibility(button_close, TRUE);
     button_setup_or_next := BtnCreate(WizardForm.Handle, 214, 305, 180, 44, ExpandConstant('{tmp}\button_finish.png'), 0, FALSE);
     BtnSetEvent(button_setup_or_next, ID_BUTTON_ON_CLICK_EVENT, WrapBtnCallback(@button_setup_or_next_on_click, 1));
     BtnSetEvent(button_close, ID_BUTTON_ON_CLICK_EVENT, WrapBtnCallback(@button_setup_or_next_on_click, 1));
