@@ -43,13 +43,6 @@
 #endif
 
 #define MyAppVersion "1.0.0"
-;编译器常量“MyAppVersionFlag”是安装程序判断是否已经安装新版本的判断依据，
-;其值为去掉所有的点的点分十进制的版本号，
-;必须是一个正整数，不能有除数字以外的任何字符（包括但不限于空格），
-;首位不能为零，若版本号以零开头，则省略第一个不为零的数字前的所有的零，
-;末尾的零不要省略，仅可省略开头的零，
-;一定要保证此值新版本大于或等于旧版本。
-#define MyAppVersionFlag "100"
 #define MyAppPublisher "My Company, Inc."
 #define MyAppPublisherURL "http://www.example.com/"
 #define MyAppSupportURL MyAppPublisherURL
@@ -207,7 +200,7 @@ VAR
   button_license, button_minimize, button_close, button_browse, button_setup_or_next, button_customize_setup, button_uncustomize_setup, checkbox_license, checkbox_setdefault, button_messagebox_close, button_messagebox_ok, button_messagebox_cancel : HWND;
   is_wizardform_show_normal, is_installer_initialized, is_platform_windows_7, is_wizardform_released, can_exit_setup, need_to_change_associations : BOOLEAN;
   edit_target_path : TEdit;
-  version_installed_before : LONGINT;
+  version_installed_before : STRING;
   messagebox_close : TSetupForm;
 
 TYPE
@@ -247,8 +240,6 @@ BEGIN
 END;
 
 FUNCTION is_installed_before() : BOOLEAN;
-VAR
-  oldVersion : STRING;
 BEGIN
 #ifndef x64Build
   IF is_platform_windows_7 THEN
@@ -257,24 +248,22 @@ BEGIN
     BEGIN
       IF RegKeyExists(HKEY_LOCAL_MACHINE, PRODUCT_REGISTRY_KEY_64) THEN
       BEGIN
-        RegQueryStringValue(HKEY_LOCAL_MACHINE, PRODUCT_REGISTRY_KEY_64, 'VersionFlag', oldVersion);
-        version_installed_before := StrToIntDef(oldVersion, 0);
+        RegQueryStringValue(HKEY_LOCAL_MACHINE, PRODUCT_REGISTRY_KEY_64, 'DisplayVersion', version_installed_before);
         Result := TRUE;
       END ELSE
       BEGIN
-        version_installed_before := 0;
+        version_installed_before := '0.0.0';
         Result := FALSE;
       END;
     END ELSE
     BEGIN
       IF RegKeyExists(HKEY_LOCAL_MACHINE, PRODUCT_REGISTRY_KEY_32) THEN
       BEGIN
-        RegQueryStringValue(HKEY_LOCAL_MACHINE, PRODUCT_REGISTRY_KEY_32, 'VersionFlag', oldVersion);
-        version_installed_before := StrToIntDef(oldVersion, 0);
+        RegQueryStringValue(HKEY_LOCAL_MACHINE, PRODUCT_REGISTRY_KEY_32, 'DisplayVersion', version_installed_before);
         Result := TRUE;
       END ELSE
       BEGIN
-        version_installed_before := 0;
+        version_installed_before := '0.0.0';
         Result := FALSE;
       END;
     END;
@@ -282,80 +271,77 @@ BEGIN
   BEGIN
     IF RegKeyExists(HKEY_LOCAL_MACHINE, PRODUCT_REGISTRY_KEY_32) THEN
       BEGIN
-        RegQueryStringValue(HKEY_LOCAL_MACHINE, PRODUCT_REGISTRY_KEY_32, 'VersionFlag', oldVersion);
-        version_installed_before := StrToIntDef(oldVersion, 0);
+        RegQueryStringValue(HKEY_LOCAL_MACHINE, PRODUCT_REGISTRY_KEY_32, 'DisplayVersion', version_installed_before);
         Result := TRUE;
       END ELSE
       BEGIN
-        version_installed_before := 0;
+        version_installed_before := '0.0.0';
         Result := FALSE;
       END;
   END;
 #else
   IF RegKeyExists(HKEY_LOCAL_MACHINE, PRODUCT_REGISTRY_KEY_32) THEN
   BEGIN
-    RegQueryStringValue(HKEY_LOCAL_MACHINE, PRODUCT_REGISTRY_KEY_32, 'VersionFlag', oldVersion);
-    version_installed_before := StrToIntDef(oldVersion, 0);
+    RegQueryStringValue(HKEY_LOCAL_MACHINE, PRODUCT_REGISTRY_KEY_32, 'DisplayVersion', version_installed_before);
     Result := TRUE;
   END ELSE
   BEGIN
-    version_installed_before := 0;
+    version_installed_before := '0.0.0';
     Result := FALSE;
   END;
 #endif
 END;
 
 FUNCTION is_installing_older_version() : BOOLEAN;
-(*//CONST
-//  maxVerLen : INTEGER = 10;
 VAR
-  installedVer : ARRAY[1..10] OF INTEGER;
-  installingVer : ARRAY[1..10] OF INTEGER;
-  i, totalSeparator, installedLen, installingLen : INTEGER;
-  version_installing_now, installedStr, installingStr, str : STRING;*)
+  installedVer : ARRAY[1..10] OF LONGINT;
+  installingVer : ARRAY[1..10] OF LONGINT;
+  oldVer, nowVer : STRING;
+  i, oldTotal, nowTotal, total : INTEGER;
 BEGIN
-  (*version_installing_now := '{#MyAppVersion}';
-  totalSeparator := 0;
-  installedLen := Length(version_installed_before);
-  FOR i := 1 TO installedLen DO
+  oldVer := version_installed_before;
+  oldTotal := 1;
+  WHILE (Pos('.', oldVer) > 0) DO
   BEGIN
-    IF (version_installed_before[i] = '.') THEN
-    BEGIN
-      totalSeparator := totalSeparator + 1;
-    END;  
+    Delete(oldVer, Pos('.', oldVer), ((Length(oldVer) - Pos('.', oldVer)) + 1));
+    installedVer[oldTotal] := StrToIntDef(oldVer, 0);
+    oldTotal := oldTotal + 1;
+    oldVer := Copy(version_installed_before, (Pos(oldVer, version_installed_before) + Length(oldVer) + 1), (Length(version_installed_before) - Pos(oldVer, version_installed_before) - Length(oldVer)));
   END;
-  installedStr := version_installed_before;
-  str := '';
-  FOR i := 1 TO (totalSeparator + 1) DO
+  nowVer := '{#MyAppVersion}';
+  nowTotal := 1;
+  WHILE (Pos('.', nowVer) > 0) DO
   BEGIN
-    IF (i > 1) THEN
+    Delete(nowVer, Pos('.', nowVer), ((Length(nowVer) - Pos('.', nowVer)) + 1));
+    installingVer[nowTotal] := StrToIntDef(nowVer, 0);
+    nowTotal := nowTotal + 1;
+    nowVer := Copy('{#MyAppVersion}', (Pos(nowVer, '{#MyAppVersion}') + Length(nowVer) + 1), (Length('{#MyAppVersion}') - Pos(nowVer, '{#MyAppVersion}') - Length(nowVer)));
+  END;
+  IF (oldTotal < nowTotal) THEN
+  BEGIN
+    FOR i := (oldTotal + 1) TO nowTotal DO
     BEGIN
-      installedStr = Copy(installedStr, (Pos('.', installedStr) + 1), (installedLen - Pos('.', installedStr)));
+      installedVer[i] := 0;
+      total := nowTotal;
     END;
-    str := installedStr;
-    Delete(str, Pos('.', str), ((installedLen - Pos('.', str)) + 1)); 
-    installedVer[i] := StrToInt(str);
-  END;
-  installingLen := Length(version_installing_now);
-  installingStr := version_installing_now;
-  str := '';
-  FOR i := 1 TO (totalSeparator + 1) DO
+  END ELSE IF (oldTotal > nowTotal) THEN
   BEGIN
-    IF (i > 1) THEN
+    FOR i := (nowTotal + 1) TO oldTotal DO
     BEGIN
-      installingStr = Copy(installingStr, (Pos('.', installingStr) + 1), (installingLen - Pos('.', installingStr)));
+      installingVer[i] := 0;
+      total := oldTotal;
     END;
-    str := installingStr;
-    Delete(str, Pos('.', str), ((installingLen - Pos('.', str)) + 1)); 
-    installingVer[i] := StrToInt(str);
-  END;
-  FOR i := 1 TO (totalSeparator + 1) DO
+  END ELSE
   BEGIN
-    IF (installingVer[i] < installedVer[i]) THEN
+    total := nowTotal;
+  END;
+  FOR i := 1 TO total DO
+  BEGIN
+    IF (installedVer[i] > installingVer[i]) THEN
     BEGIN
       Result := TRUE;
       Exit;
-    END ELSE IF (installingVer[i] > installedVer[i]) THEN 
+    END ELSE IF (installedVer[i] < installingVer[i]) THEN
     BEGIN
       Result := FALSE;
       Exit;
@@ -364,14 +350,7 @@ BEGIN
       Continue;
     END;
   END;
-  Result := FALSE;*)
-  IF (version_installed_before > StrToIntDef('{#MyAppVersionFlag}', 0)) THEN
-  BEGIN
-    Result := TRUE;
-  END ELSE
-  BEGIN
-    Result := FALSE;
-  END;   
+  Result := FALSE;
 END;
 
 PROCEDURE button_close_on_click(hBtn : HWND);
@@ -885,33 +864,6 @@ BEGIN
   END;
   IF (CurStep = ssDone) THEN
   BEGIN
-#ifndef PortableBuild
-    IF is_platform_windows_7 THEN
-    BEGIN
-      IF IsWin64 THEN
-      BEGIN
-        IF RegValueExists(HKEY_LOCAL_MACHINE, PRODUCT_REGISTRY_KEY_64, 'VersionFlag') THEN
-        BEGIN
-          RegDeleteValue(HKEY_LOCAL_MACHINE, PRODUCT_REGISTRY_KEY_64, 'VersionFlag');
-        END;
-        RegWriteStringValue(HKEY_LOCAL_MACHINE, PRODUCT_REGISTRY_KEY_64, 'VersionFlag', '{#MyAppVersionFlag}');
-      END ELSE
-      BEGIN
-        IF RegValueExists(HKEY_LOCAL_MACHINE, PRODUCT_REGISTRY_KEY_32, 'VersionFlag') THEN
-        BEGIN
-          RegDeleteValue(HKEY_LOCAL_MACHINE, PRODUCT_REGISTRY_KEY_32, 'VersionFlag');
-        END;
-        RegWriteStringValue(HKEY_LOCAL_MACHINE, PRODUCT_REGISTRY_KEY_32, 'VersionFlag', '{#MyAppVersionFlag}');
-      END;
-    END ELSE
-    BEGIN
-      IF RegValueExists(HKEY_LOCAL_MACHINE, PRODUCT_REGISTRY_KEY_32, 'VersionFlag') THEN
-      BEGIN
-        RegDeleteValue(HKEY_LOCAL_MACHINE, PRODUCT_REGISTRY_KEY_32, 'VersionFlag');
-      END;
-      RegWriteStringValue(HKEY_LOCAL_MACHINE, PRODUCT_REGISTRY_KEY_32, 'VersionFlag', '{#MyAppVersionFlag}');
-    END;
-#endif
     is_wizardform_released := TRUE;
     ImgRelease(image_wizardform_background);
     ImgRelease(image_progressbar_background);
@@ -943,33 +895,6 @@ BEGIN
   IF (CurUninstallStep = usAppMutexCheck) THEN
   BEGIN
     //此阶段为检查应用程序互斥的阶段，请在此进行互斥操作
-  END;
-  IF (CurUninstallStep = usUninstall) THEN
-  BEGIN
-#ifndef PortableBuild
-    IF is_platform_windows_7 THEN
-    BEGIN
-      IF IsWin64 THEN
-      BEGIN
-        IF RegValueExists(HKEY_LOCAL_MACHINE, PRODUCT_REGISTRY_KEY_64, 'VersionFlag') THEN
-        BEGIN
-          RegDeleteValue(HKEY_LOCAL_MACHINE, PRODUCT_REGISTRY_KEY_64, 'VersionFlag');
-        END;
-      END ELSE
-      BEGIN
-        IF RegValueExists(HKEY_LOCAL_MACHINE, PRODUCT_REGISTRY_KEY_32, 'VersionFlag') THEN
-        BEGIN
-          RegDeleteValue(HKEY_LOCAL_MACHINE, PRODUCT_REGISTRY_KEY_32, 'VersionFlag');
-        END;
-      END;
-    END ELSE
-    BEGIN
-      IF RegValueExists(HKEY_LOCAL_MACHINE, PRODUCT_REGISTRY_KEY_32, 'VersionFlag') THEN
-      BEGIN
-        RegDeleteValue(HKEY_LOCAL_MACHINE, PRODUCT_REGISTRY_KEY_32, 'VersionFlag');
-      END;
-    END;
-#endif
   END;
 END;
 
