@@ -28,7 +28,10 @@
 #define RegisteAssociations
 
 ;指定是否为绿色版安装程序（仅释放文件，不写入注册表条目，也不生成卸载程序）
-;#define PortableBuild 
+;#define PortableBuild
+
+;指定是否只能安装新版本，而不能用旧版本覆盖新版本
+;#define OnlyInstallNewVersion 
 
 #ifdef x64Build
   #define MyAppID "{D5FB0325-ED97-46CD-B11C-A199551F529C}"
@@ -622,6 +625,7 @@ END;
 FUNCTION InitializeSetup() : BOOLEAN;
 BEGIN
 #ifndef PortableBuild
+#ifdef OnlyInstallNewVersion
   IF is_installed_before() THEN
   BEGIN
     IF is_installing_older_version() THEN
@@ -636,6 +640,9 @@ BEGIN
   BEGIN
     Result := TRUE;
   END;
+#else
+  Result := TRUE;
+#endif
 #else
   Result := TRUE;
 #endif
