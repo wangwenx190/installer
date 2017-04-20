@@ -45,6 +45,9 @@
   #define MyAppMutex MyAppName
 #endif
 
+;若想开启禁止安装旧版本的功能，此处版本号请注意一定要是
+;点分十进制的正整数，除数字和英文半角句点以外不允许出现任何其他字符，
+;否则程序无法判断版本的高低。
 #define MyAppVersion "1.0.0"
 #define MyAppPublisher "My Company, Inc."
 #define MyAppPublisherURL "http://www.example.com/"
