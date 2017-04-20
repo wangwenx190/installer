@@ -31,7 +31,7 @@
 ;#define PortableBuild
 
 ;指定是否只能安装新版本，而不能用旧版本覆盖新版本
-;#define OnlyInstallNewVersion 
+#define OnlyInstallNewVersion 
 
 #ifdef x64Build
   #define MyAppID "{D5FB0325-ED97-46CD-B11C-A199551F529C}"
@@ -299,26 +299,41 @@ FUNCTION is_installing_older_version() : BOOLEAN;
 VAR
   installedVer : ARRAY[1..10] OF LONGINT;
   installingVer : ARRAY[1..10] OF LONGINT;
-  oldVer, nowVer : STRING;
+  oldVer, nowVer, version_installing_now : STRING;
   i, oldTotal, nowTotal, total : INTEGER;
 BEGIN
-  oldVer := version_installed_before;
   oldTotal := 1;
-  WHILE (Pos('.', oldVer) > 0) DO
+  WHILE (Pos('.', version_installed_before) > 0) DO
   BEGIN
+    oldVer := version_installed_before;
     Delete(oldVer, Pos('.', oldVer), ((Length(oldVer) - Pos('.', oldVer)) + 1));
     installedVer[oldTotal] := StrToIntDef(oldVer, 0);
     oldTotal := oldTotal + 1;
-    oldVer := Copy(version_installed_before, (Pos(oldVer, version_installed_before) + Length(oldVer) + 1), (Length(version_installed_before) - Pos(oldVer, version_installed_before) - Length(oldVer)));
+    version_installed_before := Copy(version_installed_before, (Pos('.', version_installed_before) + 1), (Length(version_installed_before) - Pos('.', version_installed_before)));
   END;
-  nowVer := '{#MyAppVersion}';
-  nowTotal := 1;
-  WHILE (Pos('.', nowVer) > 0) DO
+  IF (version_installed_before <> '') THEN
   BEGIN
+    installedVer[oldTotal] := StrToIntDef(version_installed_before, 0);
+  END ELSE
+  BEGIN
+    oldTotal := oldTotal - 1;
+  END;
+  version_installing_now := '{#MyAppVersion}';
+  nowTotal := 1;
+  WHILE (Pos('.', version_installing_now) > 0) DO
+  BEGIN
+    nowVer := version_installing_now;
     Delete(nowVer, Pos('.', nowVer), ((Length(nowVer) - Pos('.', nowVer)) + 1));
     installingVer[nowTotal] := StrToIntDef(nowVer, 0);
     nowTotal := nowTotal + 1;
-    nowVer := Copy('{#MyAppVersion}', (Pos(nowVer, '{#MyAppVersion}') + Length(nowVer) + 1), (Length('{#MyAppVersion}') - Pos(nowVer, '{#MyAppVersion}') - Length(nowVer)));
+    version_installing_now := Copy(version_installing_now, (Pos('.', version_installing_now) + 1), (Length(version_installing_now) - Pos('.', version_installing_now)));
+  END;
+  IF (version_installing_now <> '') THEN
+  BEGIN
+    installingVer[nowTotal] := StrToIntDef(version_installing_now, 0);
+  END ELSE
+  BEGIN
+    nowTotal := nowTotal - 1;
   END;
   IF (oldTotal < nowTotal) THEN
   BEGIN
