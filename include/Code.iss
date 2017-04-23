@@ -653,13 +653,14 @@ BEGIN
       AutoSize := FALSE;
       Left := 547;
       Top := 349;
-      Width := 100;
+      Width := 30;
       Height := 30;
       Font.Name := 'Microsoft YaHei';
       Font.Size := 10;
       Font.Color := clBlack;
       Caption := '';
       Transparent := TRUE;
+      Alignment := taRightJustify;
       OnMouseDown := @wizardform_on_mouse_down;
     END;
     image_wizardform_background := ImgLoad(WizardForm.Handle, ExpandConstant('{tmp}\background_installing.png'), 0, 0, WIZARDFORM_WIDTH_NORMAL, WIZARDFORM_HEIGHT_NORMAL, FALSE, TRUE);
