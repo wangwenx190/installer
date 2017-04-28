@@ -1,6 +1,6 @@
-//Œ™¡À∑Ω±„π‹¿Ì£¨æÕΩ´[Code]«¯∂Œµ•∂¿ƒ√≥ˆ¿¥¡À
+Ôªø//‰∏∫‰∫ÜÊñπ‰æøÁÆ°ÁêÜÔºåÂ∞±ÂçïÁã¨Êää[Code]Âå∫ÊÆµÊãøÂá∫Êù•‰∫Ü„ÄÇ
 
-//“˝»Îbotva2µƒ∫Ø ˝…˘√˜
+//ÂºïÂÖ•botva2ÁöÑÂáΩÊï∞Â£∞Êòé
 #include ".\botva2.iss"
 
 [Code]
@@ -8,21 +8,24 @@ CONST
   PRODUCT_REGISTRY_KEY_32 = 'SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\{#MyAppID}_is1';
   PRODUCT_REGISTRY_KEY_64 = 'SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\{#MyAppID}_is1';
   WM_SYSCOMMAND = $0112;
+  FR_PRIVATE = $10;
+  FR_NOT_ENUM = $20;
   ID_BUTTON_ON_CLICK_EVENT = 1;
-  WIZARDFORM_WIDTH_NORMAL = 600;
-  WIZARDFORM_HEIGHT_NORMAL = 400;
-  WIZARDFORM_HEIGHT_MORE = 503;
+  WIZARDFORM_WIDTH_NORMAL = 1024;
+  WIZARDFORM_HEIGHT_NORMAL = 488;
+  WIZARDFORM_HEIGHT_MORE = 572;
 
 VAR
-  label_wizardform_main, label_messagebox_main, label_wizardform_more_product_already_installed, label_messagebox_information, label_messagebox_title, label_wizardform_title, label_install_progress : TLabel;
-  image_wizardform_background, image_messagebox_background, image_progressbar_background, image_progressbar_foreground, PBOldProc : LONGINT;
-  button_license, button_minimize, button_close, button_browse, button_setup_or_next, button_customize_setup, button_uncustomize_setup, checkbox_license, checkbox_setdefault, button_messagebox_close, button_messagebox_ok, button_messagebox_cancel : HWND;
-  is_wizardform_show_normal, is_installer_initialized, is_platform_windows_7, is_wizardform_released, can_exit_setup, need_to_change_associations : BOOLEAN;
+  label_wizardform_main, label_messagebox_main, label_form_license_main, label_install_progress : TLabel;
+  image_wizardform_label_already_installed, image_wizardform_background, image_messagebox_background, image_form_license_background, image_progressbar_background, image_progressbar_foreground, PBOldProc : LONGINT;
+  button_wizardform_get_source_code, button_form_license_agree, button_form_license_disagree, button_form_license_close, button_finish, button_minimize, button_close, button_browse, button_install, button_customize_setup, button_uncustomize_setup, checkbox_setdefault, button_messagebox_close, button_messagebox_yes, button_messagebox_no : HWND;
+  is_wizardform_show_normal, is_installer_initialized, is_platform_windows_7, is_wizardform_released, can_exit_setup, need_to_change_associations, can_install : BOOLEAN;
   edit_target_path : TEdit;
+  richedit_license : TRichEditViewer;
   version_installed_before : STRING;
-  messagebox_close : TSetupForm;
+  messagebox_close, form_license : TSetupForm;
 
-//µ˜”√’‚∏ˆ∫Ø ˝ø…“‘ πæÿ–Œ¥∞ø⁄◊™±‰Œ™‘≤Ω«æÿ–Œ¥∞ø⁄
+//Ë∞ÉÁî®Ëøô‰∏™ÂáΩÊï∞ÂèØ‰ª•‰ΩøÁü©ÂΩ¢Á™óÂè£ËΩ¨Âèò‰∏∫ÂúÜËßíÁü©ÂΩ¢Á™óÂè£
 PROCEDURE shape_form_round(aForm : TForm; edgeSize : INTEGER);
 VAR
   FormRegion : LONGWORD;
@@ -31,7 +34,6 @@ BEGIN
   SetWindowRgn(aForm.Handle, FormRegion, TRUE);
 END;
 
-//’‚∏ˆ∫Ø ˝µƒ◊˜”√ «≈–∂œ «∑Ò“—æ≠∞≤◊∞¡ÀΩ´“™∞≤◊∞µƒ≤˙∆∑£¨»Ù“—æ≠∞≤◊∞£¨‘Ú∑µªÿTRUE£¨∑Ò‘Ú∑µªÿFALSE
 FUNCTION is_installed_before() : BOOLEAN;
 BEGIN
 #ifndef x64Build
@@ -85,7 +87,6 @@ BEGIN
 #endif
 END;
 
-//’‚∏ˆ∫Ø ˝µƒ◊˜”√ «≈–∂œ «∑Ò’˝‘⁄∞≤◊∞æ…∞Ê±æ£®»ÙœµÕ≥÷–“—æ≠∞≤◊∞¡ÀΩ´“™∞≤◊∞µƒ≤˙∆∑£©£¨ «‘Ú∑µªÿTRUE£¨∑Ò‘Ú∑µªÿFALSE
 FUNCTION is_installing_older_version() : BOOLEAN;
 VAR
   installedVer : ARRAY[1..10] OF LONGINT;
@@ -162,25 +163,22 @@ BEGIN
   Result := FALSE;
 END;
 
-//÷˜ΩÁ√Êπÿ±’∞¥≈•∞¥œ¬ ±÷¥––µƒΩ≈±æ
 PROCEDURE button_close_on_click(hBtn : HWND);
 BEGIN
   WizardForm.CancelButton.OnClick(WizardForm);
 END;
 
-//÷˜ΩÁ√Ê◊Ó–°ªØ∞¥≈•∞¥œ¬ ±÷¥––µƒΩ≈±æ
 PROCEDURE button_minimize_on_click(hBtn : HWND);
 BEGIN
   SendMessage(WizardForm.Handle, WM_SYSCOMMAND, 61472, 0);
 END;
 
-//÷˜ΩÁ√Ê◊‘∂®“Â∞≤◊∞∞¥≈•∞¥œ¬ ±÷¥––µƒΩ≈±æ
 PROCEDURE button_customize_setup_on_click(hBtn : HWND);
 BEGIN
   IF is_wizardform_show_normal THEN
   BEGIN
     WizardForm.Height := WIZARDFORM_HEIGHT_MORE;
-    image_wizardform_background := ImgLoad(WizardForm.Handle, ExpandConstant('{tmp}\background_welcome_more.png'), 0, 0, WIZARDFORM_WIDTH_NORMAL, WIZARDFORM_HEIGHT_MORE, FALSE, TRUE);
+    image_wizardform_background := ImgLoad(WizardForm.Handle, ExpandConstant('{tmp}\background_wizardform_welcome_large.png'), 0, 0, WIZARDFORM_WIDTH_NORMAL, WIZARDFORM_HEIGHT_MORE, FALSE, TRUE);
     edit_target_path.Show();
     BtnSetVisibility(button_browse, TRUE);
 #ifdef RegisteAssociations
@@ -193,20 +191,20 @@ BEGIN
     BEGIN
       edit_target_path.Enabled := FALSE;
       BtnSetEnabled(button_browse, FALSE);
-      label_wizardform_more_product_already_installed.Show();
+      ImgSetVisibility(image_wizardform_label_already_installed, TRUE);
     END;
 #endif
     is_wizardform_show_normal := FALSE;
   END ELSE
   BEGIN
     edit_target_path.Hide();
-    label_wizardform_more_product_already_installed.Hide();
+    ImgSetVisibility(image_wizardform_label_already_installed, FALSE);
     BtnSetVisibility(button_browse, FALSE);
 #ifdef RegisteAssociations
     BtnSetVisibility(checkbox_setdefault, FALSE);
 #endif
     WizardForm.Height := WIZARDFORM_HEIGHT_NORMAL;
-    image_wizardform_background := ImgLoad(WizardForm.Handle, ExpandConstant('{tmp}\background_welcome.png'), 0, 0, WIZARDFORM_WIDTH_NORMAL, WIZARDFORM_HEIGHT_NORMAL, FALSE, TRUE);
+    image_wizardform_background := ImgLoad(WizardForm.Handle, ExpandConstant('{tmp}\background_wizardform_welcome.png'), 0, 0, WIZARDFORM_WIDTH_NORMAL, WIZARDFORM_HEIGHT_NORMAL, FALSE, TRUE);
     BtnSetVisibility(button_customize_setup, TRUE);
     BtnSetVisibility(button_uncustomize_setup, FALSE);
     is_wizardform_show_normal := TRUE;
@@ -214,32 +212,17 @@ BEGIN
   ImgApplyChanges(WizardForm.Handle);
 END;
 
-//÷˜ΩÁ√Ê‰Ø¿¿∞¥≈•∞¥œ¬ ±÷¥––µƒΩ≈±æ
 PROCEDURE button_browse_on_click(hBtn : HWND);
 BEGIN
   WizardForm.DirBrowseButton.OnClick(WizardForm);
   edit_target_path.Text := WizardForm.DirEdit.Text;
 END;
 
-//¬∑æ∂ ‰»ÎøÚŒƒ±æ±‰ªØ ±÷¥––µƒΩ≈±æ
 PROCEDURE edit_target_path_on_change(Sender : TObject);
 BEGIN
   WizardForm.DirEdit.Text := edit_target_path.Text;
 END;
 
-//Õ¨“‚–Ìø…–≠“Èµƒ∏¥—°øÚ±ªµ„ª˜ ±÷¥––µƒΩ≈±æ
-PROCEDURE checkbox_license_on_click(hBtn : HWND);
-BEGIN
-    IF BtnGetChecked(checkbox_license) THEN
-    BEGIN
-      BtnSetEnabled(button_setup_or_next, TRUE);
-    END ELSE
-    BEGIN
-      BtnSetEnabled(button_setup_or_next, FALSE);
-    END;
-END;
-
-//…ËŒ™ƒ¨»œ»Ìº˛µƒ∏¥—°øÚ±ªµ„ª˜ ±÷¥––µƒΩ≈±æ
 PROCEDURE checkbox_setdefault_on_click(hBtn : HWND);
 BEGIN
   IF BtnGetChecked(checkbox_setdefault) THEN
@@ -251,29 +234,35 @@ BEGIN
   END;
 END;
 
-//∑µªÿ…ËŒ™ƒ¨»œ»Ìº˛∏¥—°øÚµƒ◊¥Ã¨£¨“—π¥—°‘Ú∑µªÿTRUE£¨∑Ò‘Ú∑µªÿFALSE
 FUNCTION is_setdefault_checkbox_checked() : BOOLEAN;
 BEGIN
   Result := need_to_change_associations;
 END;
 
-//»Ù…ËŒ™ƒ¨»œ»Ìº˛µƒ∏¥—°øÚ±ªπ¥—°£¨‘Úª·‘⁄Œƒº˛∏¥÷∆Ω· ¯ ±÷¥––¥À∂ŒΩ≈±æ
 PROCEDURE check_if_need_change_associations();
 BEGIN
   IF is_setdefault_checkbox_checked() THEN
   BEGIN
     //TODO
-    MsgBox('¥À¥¶÷¥––◊¢≤·Œƒº˛∫Û◊∫√˚µƒ≤Ÿ◊˜°£', mbInformation, MB_OK);
+    MsgBox('Ê≠§Â§ÑÊâßË°åÊ≥®ÂÜåÊñá‰ª∂ÂêéÁºÄÂêçÁöÑÊìç‰Ωú„ÄÇ', mbInformation, MB_OK);
   END;
 END;
 
-//÷˜ΩÁ√Ê∞≤◊∞∞¥≈•∞¥œ¬ ±÷¥––µƒΩ≈±æ
-PROCEDURE button_setup_or_next_on_click(hBtn : HWND);
+PROCEDURE button_install_on_click(hBtn : HWND);
+BEGIN
+  form_license.Center();
+  form_license.ShowModal();
+  IF can_install THEN
+  BEGIN
+    WizardForm.NextButton.OnClick(WizardForm);
+  END;
+END;
+
+PROCEDURE button_finish_on_click(hBtn : HWND);
 BEGIN
   WizardForm.NextButton.OnClick(WizardForm);
 END;
 
-//∏¥÷∆Œƒº˛ ±÷¥––µƒΩ≈±æ£¨√ø∏¥÷∆1%∂ºª·±ªµ˜”√“ª¥Œ£¨»Ù“™µ˜’˚Ω¯∂»ÃıªÚΩ¯∂»Ã· æ«Î‘⁄¥À∂Œ–ﬁ∏ƒ
 FUNCTION PBProc(h : hWnd; Msg, wParam, lParam : LONGINT) : LONGINT;
 VAR
   pr, i1, i2 : EXTENDED;
@@ -286,50 +275,62 @@ BEGIN
     i2 := WizardForm.ProgressGauge.Max - WizardForm.ProgressGauge.Min;
     pr := (i1 * 100) / i2;
     label_install_progress.Caption := Format('%d', [Round(pr)]) + '%';
-    w := Round((560 * pr) / 100);
-    ImgSetPosition(image_progressbar_foreground, 20, 374, w, 6);
-    ImgSetVisiblePart(image_progressbar_foreground, 0, 0, w, 6);
+    w := Round((WIZARDFORM_WIDTH_NORMAL * pr) / 100);
+    ImgSetPosition(image_progressbar_foreground, 0, 0, w, WIZARDFORM_HEIGHT_NORMAL);
+    ImgSetVisiblePart(image_progressbar_foreground, 0, 0, w, WIZARDFORM_HEIGHT_NORMAL);
     ImgApplyChanges(WizardForm.Handle);
   END;
 END;
 
-//‘ƒ∂¡–Ìø…–≠“Èµƒ∞¥≈•∞¥œ¬ ±÷¥––µƒΩ≈±æ
-PROCEDURE button_license_on_click(hBtn : HWND);
+PROCEDURE button_get_source_code_on_click(hBtn : HWND);
 VAR
   ErrorCode : INTEGER;
 BEGIN
   ShellExec('', '{#MyAppLicenseURL}', '', '', SW_SHOW, ewNoWait, ErrorCode);
 END;
 
-//»°œ˚∞≤◊∞µØøÚµƒ»∑∂®∞¥≈•∞¥œ¬ ±÷¥––µƒΩ≈±æ
-PROCEDURE button_messagebox_ok_on_click(hBtn : HWND);
+PROCEDURE button_messagebox_yes_on_click(hBtn : HWND);
 BEGIN
   can_exit_setup := TRUE;
   messagebox_close.Close();
 END;
 
-//»°œ˚∞≤◊∞µØøÚµƒ»°œ˚∞¥≈•∞¥œ¬ ±÷¥––µƒΩ≈±æ
-PROCEDURE button_messagebox_cancel_on_click(hBtn : HWND);
+PROCEDURE button_messagebox_no_on_click(hBtn : HWND);
 BEGIN
   can_exit_setup := FALSE;
   messagebox_close.Close();
 END;
 
-//÷˜ΩÁ√Ê±ªµ„◊°æÕÀÊ Û±Í“∆∂ØµƒΩ≈±æ
+PROCEDURE button_form_license_close_on_click(hBtn : HWND);
+BEGIN
+  can_install := FALSE;
+  form_license.Close();
+END;
+
+PROCEDURE button_form_license_agree_on_click(hBtn : HWND);
+BEGIN
+  can_install := TRUE;
+  form_license.Close();
+END;
+
 PROCEDURE wizardform_on_mouse_down(Sender : TObject; Button : TMouseButton; Shift : TShiftState; X, Y : INTEGER);
 BEGIN
   ReleaseCapture();
   SendMessage(WizardForm.Handle, WM_SYSCOMMAND, $F012, 0);
 END;
 
-//»°œ˚µØøÚ±ªµ„◊°æÕÀÊ Û±Í“∆∂ØµƒΩ≈±æ
 PROCEDURE messagebox_on_mouse_down(Sender : TObject; Button : TMouseButton; Shift : TShiftState; X, Y : INTEGER);
 BEGIN
   ReleaseCapture();
   SendMessage(messagebox_close.Handle, WM_SYSCOMMAND, $F012, 0);
 END;
 
-//≈–∂œœµÕ≥ «∑ÒŒ™Win7£¨ «‘Ú∑µªÿTRUE£¨∑Ò‘Ú∑µªÿFALSE
+PROCEDURE form_license_on_mouse_down(Sender : TObject; Button : TMouseButton; Shift : TShiftState; X, Y : INTEGER);
+BEGIN
+  ReleaseCapture();
+  SendMessage(form_license.Handle, WM_SYSCOMMAND, $F012, 0);
+END;
+
 PROCEDURE determine_wether_is_windows_7_or_not();
 VAR
   sysVersion : TWindowsVersion;
@@ -344,49 +345,16 @@ BEGIN
   END;
 END;
 
-//¥¥Ω®»°œ˚µØøÚµƒΩ≈±æ
 PROCEDURE messagebox_close_create();
 BEGIN
   messagebox_close := CreateCustomForm();
   WITH messagebox_close DO
   BEGIN
     BorderStyle := bsNone;
-    Width := 380;
-    Height := 190;
+    Width := 522;
+    Height := 254;
     Color := clWhite;
     Caption := '';
-  END;
-  label_messagebox_title := TLabel.Create(messagebox_close);
-  WITH label_messagebox_title DO
-  BEGIN
-    Parent := messagebox_close;
-    AutoSize := FALSE;
-    Left := 30;
-    Top := 5;
-    Width := 400;
-    Height := 20;
-    Font.Name := 'Microsoft YaHei';
-    Font.Size := 10;
-    Font.Color := clWhite;
-    Caption := '{#MyAppName} ∞≤◊∞';
-    Transparent := TRUE;
-    OnMouseDown := @messagebox_on_mouse_down;
-  END;
-  label_messagebox_information := TLabel.Create(messagebox_close);
-  WITH label_messagebox_information DO
-  BEGIN
-    Parent := messagebox_close;
-    AutoSize := FALSE;
-    Left := 70;
-    Top := 64;
-    Width := 400;
-    Height := 20;
-    Font.Name := 'Microsoft YaHei';
-    Font.Size := 10;
-    Font.Color := clBlack;
-    Caption := 'ƒ˙»∑∂®“™ÕÀ≥ˆ°∞{#MyAppName}°±∞≤◊∞≥Ã–Ú£ø';
-    Transparent := TRUE;
-    OnMouseDown := @messagebox_on_mouse_down;
   END;
   label_messagebox_main := TLabel.Create(messagebox_close);
   WITH label_messagebox_main DO
@@ -401,58 +369,115 @@ BEGIN
     Transparent := TRUE;
     OnMouseDown := @messagebox_on_mouse_down;
   END;
-  image_messagebox_background := ImgLoad(messagebox_close.Handle, ExpandConstant('{tmp}\background_messagebox.png'), 0, 0, 380, 190, FALSE, TRUE);
-  button_messagebox_close := BtnCreate(messagebox_close.Handle, 350, 0, 30, 30, ExpandConstant('{tmp}\button_close.png'), 0, FALSE);
-  BtnSetEvent(button_messagebox_close, ID_BUTTON_ON_CLICK_EVENT, WrapBtnCallback(@button_messagebox_cancel_on_click, 1));
-  button_messagebox_ok := BtnCreate(messagebox_close.Handle, 206, 150, 76, 28, ExpandConstant('{tmp}\button_ok.png'), 0, FALSE);
-  BtnSetEvent(button_messagebox_ok, ID_BUTTON_ON_CLICK_EVENT, WrapBtnCallback(@button_messagebox_ok_on_click, 1));
-  button_messagebox_cancel := BtnCreate(messagebox_close.Handle, 293, 150, 76, 28, ExpandConstant('{tmp}\button_cancel.png'), 0, FALSE);
-  BtnSetEvent(button_messagebox_cancel, ID_BUTTON_ON_CLICK_EVENT, WrapBtnCallback(@button_messagebox_cancel_on_click, 1));
+  image_messagebox_background := ImgLoad(messagebox_close.Handle, ExpandConstant('{tmp}\background_messagebox.png'), 0, 0, 522, 254, FALSE, TRUE);
+  button_messagebox_close := BtnCreate(messagebox_close.Handle, 476, 1, 45, 29, ExpandConstant('{tmp}\button_close.png'), 0, FALSE);
+  BtnSetEvent(button_messagebox_close, ID_BUTTON_ON_CLICK_EVENT, WrapBtnCallback(@button_messagebox_no_on_click, 1));
+  button_messagebox_yes := BtnCreate(messagebox_close.Handle, 143, 193, 86, 33, ExpandConstant('{tmp}\button_yes.png'), 0, FALSE);
+  BtnSetEvent(button_messagebox_yes, ID_BUTTON_ON_CLICK_EVENT, WrapBtnCallback(@button_messagebox_yes_on_click, 1));
+  button_messagebox_no := BtnCreate(messagebox_close.Handle, 293, 193, 86, 33, ExpandConstant('{tmp}\button_no.png'), 0, FALSE);
+  BtnSetEvent(button_messagebox_no, ID_BUTTON_ON_CLICK_EVENT, WrapBtnCallback(@button_messagebox_no_on_click, 1));
   ImgApplyChanges(messagebox_close.Handle);
 END;
 
-// Õ∑≈∞≤◊∞≥Ã–Ú ±µ˜”√µƒΩ≈±æ
+PROCEDURE form_license_create();
+BEGIN
+  form_license := CreateCustomForm();
+  WITH form_license DO
+  BEGIN
+    BorderStyle := bsNone;
+    Width := 510;
+    Height := 447;
+    Color := clWhite;
+    Caption := '';
+  END;
+  richedit_license := TRichEditViewer.Create(form_license);
+  WITH richedit_license DO
+  BEGIN
+    Parent := form_license;
+    BorderStyle := bsNone;
+    Left := 16;
+    Top := 32;
+    Width := 478;
+    Height := 370;
+    //SetBounds(16, 32, 478, 370);
+    Font.Name := 'Samsung Sharp Sans Bold';
+    Font.Size := 10;
+    Font.Color := clBlack;
+    Lines.LoadFromFile(ExpandConstant('{tmp}\license.txt'));
+    ScrollBars := ssVertical;
+    TabStop := FALSE;
+    ReadOnly := TRUE;
+  END;
+  label_form_license_main := TLabel.Create(form_license);
+  WITH label_form_license_main DO
+  BEGIN
+    Parent := form_license;
+    AutoSize := FALSE;
+    Left := 0;
+    Top := 0;
+    Width := form_license.Width;
+    Height := form_license.Height;
+    Caption := '';
+    Transparent := TRUE;
+    OnMouseDown := @form_license_on_mouse_down;
+  END;
+  image_form_license_background := ImgLoad(form_license.Handle, ExpandConstant('{tmp}\background_form_license.png'), 0, 0, 510, 447, FALSE, TRUE);
+  button_form_license_close := BtnCreate(form_license.Handle, 464, 1, 45, 29, ExpandConstant('{tmp}\button_close.png'), 0, FALSE);
+  BtnSetEvent(button_form_license_close, ID_BUTTON_ON_CLICK_EVENT, WrapBtnCallback(@button_form_license_close_on_click, 1));
+  button_form_license_agree := BtnCreate(form_license.Handle, 114, 412, 106, 24, ExpandConstant('{tmp}\button_agree.png'), 0, FALSE);
+  BtnSetEvent(button_form_license_agree, ID_BUTTON_ON_CLICK_EVENT, WrapBtnCallback(@button_form_license_agree_on_click, 1));
+  button_form_license_disagree := BtnCreate(form_license.Handle, 285, 412, 106, 24, ExpandConstant('{tmp}\button_disagree.png'), 0, FALSE);
+  BtnSetEvent(button_form_license_disagree, ID_BUTTON_ON_CLICK_EVENT, WrapBtnCallback(@button_form_license_close_on_click, 1));
+  ImgApplyChanges(form_license.Handle);
+END;
+
 PROCEDURE release_installer();
 BEGIN
+  RemoveFontResourceEx(ExpandConstant('{tmp}\SamsungSharpSans-Bold.ttf'), FR_PRIVATE, 0);
   gdipShutdown();
+  form_license.Release();
   messagebox_close.Release();
   WizardForm.Release();
 END;
 
-//‘⁄≥ı ºªØ÷Æ∫Û Õ∑≈∞≤◊∞≥Ã–ÚµƒΩ≈±æ
 PROCEDURE release_installer_after_init();
 BEGIN
+  RemoveFontResourceEx(ExpandConstant('{tmp}\SamsungSharpSans-Bold.ttf'), FR_PRIVATE, 0);
+  form_license.Release();
   messagebox_close.Release();
   WizardForm.Release();
 END;
 
-// Õ∑≈–Ë“™µƒ¡Ÿ ±◊ ‘¥Œƒº˛
 PROCEDURE extract_temp_files();
 BEGIN
-  ExtractTemporaryFile('button_customize_setup.png');
-  ExtractTemporaryFile('button_uncustomize_setup.png');
-  ExtractTemporaryFile('button_finish.png');
-  ExtractTemporaryFile('button_setup_or_next.png');
-  ExtractTemporaryFile('background_welcome.png');
-  ExtractTemporaryFile('background_welcome_more.png');
+  ExtractTemporaryFile('SamsungSharpSans-Bold.ttf');
+  ExtractTemporaryFile('license.txt');
+  ExtractTemporaryFile('background_form_license.png');
+  ExtractTemporaryFile('background_messagebox.png');
+  ExtractTemporaryFile('background_progressbar.png');
+  ExtractTemporaryFile('background_wizardform_finish.png');
+  ExtractTemporaryFile('background_wizardform_installing.png');
+  ExtractTemporaryFile('background_wizardform_welcome.png');
+  ExtractTemporaryFile('background_wizardform_welcome_large.png');
+  ExtractTemporaryFile('button_agree.png');
   ExtractTemporaryFile('button_browse.png');
-  ExtractTemporaryFile('progressbar_background.png');
-  ExtractTemporaryFile('progressbar_foreground.png');
-  ExtractTemporaryFile('button_license.png');
-  ExtractTemporaryFile('checkbox_license.png');
+  ExtractTemporaryFile('button_close.png');
+  ExtractTemporaryFile('button_customize_setup.png');
+  ExtractTemporaryFile('button_disagree.png');
+  ExtractTemporaryFile('button_finish.png');
+  ExtractTemporaryFile('button_get_source_code.png');
+  ExtractTemporaryFile('button_install.png');
+  ExtractTemporaryFile('button_minimize.png');
+  ExtractTemporaryFile('button_no.png');
+  ExtractTemporaryFile('button_uncustomize_setup.png');
+  ExtractTemporaryFile('button_yes.png');
 #ifdef RegisteAssociations
   ExtractTemporaryFile('checkbox_setdefault.png');
 #endif
-  ExtractTemporaryFile('background_installing.png');
-  ExtractTemporaryFile('background_finish.png');
-  ExtractTemporaryFile('button_close.png');
-  ExtractTemporaryFile('button_minimize.png');
-  ExtractTemporaryFile('background_messagebox.png');
-  ExtractTemporaryFile('button_cancel.png');
-  ExtractTemporaryFile('button_ok.png');
+  ExtractTemporaryFile('foreground_progressbar.png');
+  ExtractTemporaryFile('label_already_installed.png');
 END;
 
-//÷ÿ‘ÿ÷˜ΩÁ√Ê»°œ˚∞¥≈•±ª∞¥œ¬∫Ûµƒ¥¶¿Ìπ˝≥Ã
 PROCEDURE CancelButtonClick(CurPageID : INTEGER; VAR Cancel, Confirm: BOOLEAN);
 BEGIN
   Confirm := FALSE;
@@ -468,7 +493,6 @@ BEGIN
   END;
 END;
 
-//÷ÿ‘ÿ∞≤◊∞≥Ã–Ú≥ı ºªØ∫Ø ˝£¨≈–∂œ «∑Ò“—æ≠∞≤◊∞–¬∞Ê±æ£¨ «‘ÚΩ˚÷π∞≤◊∞
 FUNCTION InitializeSetup() : BOOLEAN;
 BEGIN
 #ifndef PortableBuild
@@ -477,7 +501,7 @@ BEGIN
   BEGIN
     IF is_installing_older_version() THEN
     BEGIN
-      MsgBox('ƒ˙“—∞≤◊∞∏¸–¬∞Ê±æµƒ°∞{#MyAppName}°±£¨≤ª‘ –Ì π”√æ…∞Ê±æÃÊªª–¬∞Ê±æ£¨«Îµ•ª˜°∞»∑∂®°±∞¥≈•ÕÀ≥ˆ¥À∞≤◊∞≥Ã–Ú°£', mbInformation, MB_OK);
+      MsgBox('You have already installed a newer version of {#MyAppName}Ôºåso you are not allowed to continueÔºåplease click <OK> to exit setup.', mbInformation, MB_OK);
       Result := FALSE;
     END ELSE
     BEGIN
@@ -495,15 +519,17 @@ BEGIN
 #endif
 END;
 
-//÷ÿ‘ÿ∞≤◊∞≥Ã–Ú≥ı ºªØ∫Ø ˝£®∫Õ…œ±ﬂƒ«∏ˆ≤ª“ª—˘£©£¨Ω¯––≥ı ºªØ≤Ÿ◊˜
 PROCEDURE InitializeWizard();
 BEGIN
+  extract_temp_files();
+  AddFontResourceEx(ExpandConstant('{tmp}\SamsungSharpSans-Bold.ttf'), FR_PRIVATE, 0);
   is_installer_initialized := TRUE;
   is_wizardform_show_normal := TRUE;
   is_wizardform_released := FALSE;
   need_to_change_associations := TRUE;
+  can_install := FALSE;
+  can_exit_setup := FALSE;
   determine_wether_is_windows_7_or_not();
-  extract_temp_files();
   WizardForm.InnerNotebook.Hide();
   WizardForm.OuterNotebook.Hide();
   WizardForm.Bevel.Hide();
@@ -518,39 +544,6 @@ BEGIN
     CancelButton.Height := 0;
     BackButton.Visible := FALSE;
   END;
-  label_wizardform_title := TLabel.Create(WizardForm);
-  WITH label_wizardform_title DO
-  BEGIN
-    Parent := WizardForm;
-    AutoSize := FALSE;
-    Left := 10;
-    Top := 5;
-    Width := 200;
-    Height := 20;
-    Font.Name := 'Microsoft YaHei';
-    Font.Size := 9;
-    Font.Color := clWhite;
-    Caption := '{#MyAppName} V{#MyAppVersion} ∞≤◊∞';
-    Transparent := TRUE;
-    OnMouseDown := @wizardform_on_mouse_down;
-  END;
-  label_wizardform_more_product_already_installed := TLabel.Create(WizardForm);
-  WITH label_wizardform_more_product_already_installed DO
-  BEGIN
-    Parent := WizardForm;
-    AutoSize := FALSE;
-    Left := 85;
-    Top := 449;
-    Width := 200;
-    Height := 20;
-    Font.Name := 'Microsoft YaHei';
-    Font.Size := 9;
-    Font.Color := clGray;
-    Caption := '»Ìº˛“—æ≠∞≤◊∞£¨≤ª‘ –Ì∏¸ªªƒø¬º°£';
-    Transparent := TRUE;
-    OnMouseDown := @wizardform_on_mouse_down;
-  END;
-  label_wizardform_more_product_already_installed.Hide();
   label_wizardform_main := TLabel.Create(WizardForm);
   WITH label_wizardform_main DO
   BEGIN
@@ -568,36 +561,43 @@ BEGIN
   WITH edit_target_path DO
   BEGIN
     Parent := WizardForm;
-    Text := WizardForm.DirEdit.Text;
-    Font.Name := 'Microsoft YaHei';
-    Font.Size := 9;
     BorderStyle := bsNone;
-    SetBounds(91,423,402,20);
+    Left := 210;
+    Top := 496;
+    Width := 700;
+    Height := 15;
+    //SetBounds(210, 496, 700, 15);
+    Font.Name := 'Samsung Sharp Sans Bold';
+    Font.Size := 10;
+    Font.Color := clBlack;
+    Text := WizardForm.DirEdit.Text;
     OnChange := @edit_target_path_on_change;
     Color := clWhite;
     TabStop := FALSE;
   END;
   edit_target_path.Hide();
-  button_close := BtnCreate(WizardForm.Handle, 570, 0, 30, 30, ExpandConstant('{tmp}\button_close.png'), 0, FALSE);
+  button_close := BtnCreate(WizardForm.Handle, 978, 1, 45, 29, ExpandConstant('{tmp}\button_close.png'), 0, FALSE);
   BtnSetEvent(button_close, ID_BUTTON_ON_CLICK_EVENT, WrapBtnCallback(@button_close_on_click, 1));
-  button_minimize := BtnCreate(WizardForm.Handle, 540, 0, 30, 30, ExpandConstant('{tmp}\button_minimize.png'), 0, FALSE);
+  button_minimize := BtnCreate(WizardForm.Handle, 933, 1, 45, 29, ExpandConstant('{tmp}\button_minimize.png'), 0, FALSE);
   BtnSetEvent(button_minimize, ID_BUTTON_ON_CLICK_EVENT, WrapBtnCallback(@button_minimize_on_click, 1));
-  button_setup_or_next := BtnCreate(WizardForm.Handle, 211, 305, 178, 43, ExpandConstant('{tmp}\button_setup_or_next.png'), 0, FALSE);
-  BtnSetEvent(button_setup_or_next, ID_BUTTON_ON_CLICK_EVENT, WrapBtnCallback(@button_setup_or_next_on_click, 1));
-  button_browse := BtnCreate(WizardForm.Handle, 506, 420, 75, 24, ExpandConstant('{tmp}\button_browse.png'), 0, FALSE);
+  button_install := BtnCreate(WizardForm.Handle, 434, 228, 156, 32, ExpandConstant('{tmp}\button_install.png'), 0, FALSE);
+  BtnSetEvent(button_install, ID_BUTTON_ON_CLICK_EVENT, WrapBtnCallback(@button_install_on_click, 1));
+  button_browse := BtnCreate(WizardForm.Handle, 928, 491, 84, 25, ExpandConstant('{tmp}\button_browse.png'), 0, FALSE);
   BtnSetEvent(button_browse, ID_BUTTON_ON_CLICK_EVENT, WrapBtnCallback(@button_browse_on_click, 1));
   BtnSetVisibility(button_browse, FALSE);
-  button_customize_setup := BtnCreate(WizardForm.Handle, 511, 374, 78, 14, ExpandConstant('{tmp}\button_customize_setup.png'), 0, FALSE);
+  button_customize_setup := BtnCreate(WizardForm.Handle, 304, 453, 151, 13, ExpandConstant('{tmp}\button_customize_setup.png'), 0, FALSE);
   BtnSetEvent(button_customize_setup, ID_BUTTON_ON_CLICK_EVENT, WrapBtnCallback(@button_customize_setup_on_click, 1));
-  button_uncustomize_setup := BtnCreate(WizardForm.Handle, 511, 374, 78, 14, ExpandConstant('{tmp}\button_uncustomize_setup.png'), 0, FALSE);
+  button_uncustomize_setup := BtnCreate(WizardForm.Handle, 304, 453, 151, 13, ExpandConstant('{tmp}\button_uncustomize_setup.png'), 0, FALSE);
   BtnSetEvent(button_uncustomize_setup, ID_BUTTON_ON_CLICK_EVENT, WrapBtnCallback(@button_customize_setup_on_click, 1));
   BtnSetVisibility(button_uncustomize_setup, FALSE);
+  image_wizardform_label_already_installed := ImgLoad(WizardForm.Handle, ExpandConstant('{tmp}\label_already_installed.png'), 12, 520, 877, 20, FALSE, FALSE);
+  ImgSetVisibility(image_wizardform_label_already_installed, FALSE);
   PBOldProc := SetWindowLong(WizardForm.ProgressGauge.Handle, -4, PBCallBack(@PBProc, 4));
   ImgApplyChanges(WizardForm.Handle);
   messagebox_close_create();
+  form_license_create();
 END;
 
-//∞≤◊∞≥Ã–Úœ˙ªŸ ±ª·µ˜”√’‚∏ˆ∫Ø ˝
 PROCEDURE DeinitializeSetup();
 BEGIN
   IF ((is_wizardform_released = FALSE) AND (can_exit_setup = FALSE)) THEN
@@ -610,19 +610,15 @@ BEGIN
   END;
 END;
 
-//∞≤◊∞“≥√Ê∏ƒ±‰ ±ª·µ˜”√’‚∏ˆ∫Ø ˝
 PROCEDURE CurPageChanged(CurPageID : INTEGER);
 BEGIN
   IF (CurPageID = wpWelcome) THEN
   BEGIN
-    image_wizardform_background := ImgLoad(WizardForm.Handle, ExpandConstant('{tmp}\background_welcome.png'), 0, 0, WIZARDFORM_WIDTH_NORMAL, WIZARDFORM_HEIGHT_NORMAL, FALSE, TRUE);
-    button_license := BtnCreate(WizardForm.Handle, 110, 376, 96, 12, ExpandConstant('{tmp}\button_license.png'), 0, FALSE);
-    BtnSetEvent(button_license, ID_BUTTON_ON_CLICK_EVENT, WrapBtnCallback(@button_license_on_click, 1));
-    checkbox_license := BtnCreate(WizardForm.Handle, 11, 374, 93, 17, ExpandConstant('{tmp}\checkbox_license.png'), 0, TRUE);
-    BtnSetEvent(checkbox_license, ID_BUTTON_ON_CLICK_EVENT, WrapBtnCallback(@checkbox_license_on_click, 1));
-    BtnSetChecked(checkbox_license, TRUE);
+    image_wizardform_background := ImgLoad(WizardForm.Handle, ExpandConstant('{tmp}\background_wizardform_welcome.png'), 0, 0, WIZARDFORM_WIDTH_NORMAL, WIZARDFORM_HEIGHT_NORMAL, FALSE, TRUE);
+    button_wizardform_get_source_code := BtnCreate(WizardForm.Handle, 22, 451, 241, 15, ExpandConstant('{tmp}\button_get_source_code.png'), 0, FALSE);
+    BtnSetEvent(button_wizardform_get_source_code, ID_BUTTON_ON_CLICK_EVENT, WrapBtnCallback(@button_get_source_code_on_click, 1));
 #ifdef RegisteAssociations
-    checkbox_setdefault := BtnCreate(WizardForm.Handle, 85, 470, 92, 17, ExpandConstant('{tmp}\checkbox_setdefault.png'), 0, TRUE);
+    checkbox_setdefault := BtnCreate(WizardForm.Handle, 13, 544, 364, 20, ExpandConstant('{tmp}\checkbox_setdefault.png'), 0, TRUE);
     BtnSetEvent(checkbox_setdefault, ID_BUTTON_ON_CLICK_EVENT, WrapBtnCallback(@checkbox_setdefault_on_click, 1));
     BtnSetChecked(checkbox_setdefault, TRUE);
     BtnSetVisibility(checkbox_setdefault, FALSE);
@@ -633,40 +629,40 @@ BEGIN
   IF (CurPageID = wpInstalling) THEN
   BEGIN
     edit_target_path.Hide();
-    label_wizardform_more_product_already_installed.Hide();
+    ImgSetVisibility(image_wizardform_label_already_installed, FALSE);
     BtnSetVisibility(button_browse, FALSE);
     WizardForm.Height := WIZARDFORM_HEIGHT_NORMAL;
     is_wizardform_show_normal := TRUE;
     BtnSetVisibility(button_customize_setup, FALSE);
     BtnSetVisibility(button_uncustomize_setup, FALSE);
     BtnSetVisibility(button_close, FALSE);
-    BtnSetPosition(button_minimize, 570, 0, 30, 30);
+    BtnSetPosition(button_minimize, 978, 1, 45, 29);
 #ifdef RegisteAssociations
     BtnSetVisibility(checkbox_setdefault, FALSE);
 #endif
-    BtnSetVisibility(button_license, FALSE);
-    BtnSetVisibility(checkbox_license, FALSE);
+    BtnSetVisibility(button_wizardform_get_source_code, FALSE);
     label_install_progress := TLabel.Create(WizardForm);
     WITH label_install_progress DO
     BEGIN
       Parent := WizardForm;
       AutoSize := FALSE;
-      Left := 547;
-      Top := 349;
-      Width := 30;
-      Height := 30;
-      Font.Name := 'Microsoft YaHei';
-      Font.Size := 10;
-      Font.Color := clBlack;
+      Left := 429;
+      Top := 205;
+      Width := 160;
+      Height := 65;
+      //SetBounds(429, 205, 160, 65);
+      Font.Name := 'Samsung Sharp Sans Bold';
+      Font.Size := 50;
+      Font.Color := $0ae223;
+      Alignment := taRightJustify;
       Caption := '';
       Transparent := TRUE;
-      Alignment := taRightJustify;
       OnMouseDown := @wizardform_on_mouse_down;
     END;
-    image_wizardform_background := ImgLoad(WizardForm.Handle, ExpandConstant('{tmp}\background_installing.png'), 0, 0, WIZARDFORM_WIDTH_NORMAL, WIZARDFORM_HEIGHT_NORMAL, FALSE, TRUE);
-    image_progressbar_background := ImgLoad(WizardForm.Handle, ExpandConstant('{tmp}\progressbar_background.png'), 20, 374, 560, 6, FALSE, TRUE);
-    image_progressbar_foreground := ImgLoad(WizardForm.Handle, ExpandConstant('{tmp}\progressbar_foreground.png'), 20, 374, 0, 0, TRUE, TRUE);
-    BtnSetVisibility(button_setup_or_next, FALSE);
+    image_wizardform_background := ImgLoad(WizardForm.Handle, ExpandConstant('{tmp}\background_wizardform_installing.png'), 0, 0, WIZARDFORM_WIDTH_NORMAL, WIZARDFORM_HEIGHT_NORMAL, FALSE, TRUE);
+    image_progressbar_background := ImgLoad(WizardForm.Handle, ExpandConstant('{tmp}\background_progressbar.png'), 0, 0, WIZARDFORM_WIDTH_NORMAL, WIZARDFORM_HEIGHT_NORMAL, FALSE, TRUE);
+    image_progressbar_foreground := ImgLoad(WizardForm.Handle, ExpandConstant('{tmp}\foreground_progressbar.png'), 0, 0, 0, 0, TRUE, TRUE);
+    BtnSetVisibility(button_install, FALSE);
     ImgApplyChanges(WizardForm.Handle);
   END;
   IF (CurPageID = wpFinished) THEN
@@ -675,17 +671,16 @@ BEGIN
     label_install_progress.Visible := FALSE;
     ImgSetVisibility(image_progressbar_background, FALSE);
     ImgSetVisibility(image_progressbar_foreground, FALSE);
-    BtnSetPosition(button_minimize, 540, 0, 30, 30);
+    BtnSetPosition(button_minimize, 933, 1, 45, 29);
     BtnSetVisibility(button_close, TRUE);
-    button_setup_or_next := BtnCreate(WizardForm.Handle, 214, 305, 180, 44, ExpandConstant('{tmp}\button_finish.png'), 0, FALSE);
-    BtnSetEvent(button_setup_or_next, ID_BUTTON_ON_CLICK_EVENT, WrapBtnCallback(@button_setup_or_next_on_click, 1));
-    BtnSetEvent(button_close, ID_BUTTON_ON_CLICK_EVENT, WrapBtnCallback(@button_setup_or_next_on_click, 1));
-    image_wizardform_background := ImgLoad(WizardForm.Handle, ExpandConstant('{tmp}\background_finish.png'), 0, 0, WIZARDFORM_WIDTH_NORMAL, WIZARDFORM_HEIGHT_NORMAL, FALSE, TRUE);
+    button_finish := BtnCreate(WizardForm.Handle, 451, 228, 120, 32, ExpandConstant('{tmp}\button_finish.png'), 0, FALSE);
+    BtnSetEvent(button_finish, ID_BUTTON_ON_CLICK_EVENT, WrapBtnCallback(@button_finish_on_click, 1));
+    BtnSetEvent(button_close, ID_BUTTON_ON_CLICK_EVENT, WrapBtnCallback(@button_finish_on_click, 1));
+    image_wizardform_background := ImgLoad(WizardForm.Handle, ExpandConstant('{tmp}\background_wizardform_finish.png'), 0, 0, WIZARDFORM_WIDTH_NORMAL, WIZARDFORM_HEIGHT_NORMAL, FALSE, TRUE);
     ImgApplyChanges(WizardForm.Handle);
   END;
 END;
 
-//∞≤◊∞≤Ω÷Ë∏ƒ±‰ ±ª·µ˜”√’‚∏ˆ∫Ø ˝
 PROCEDURE CurStepChanged(CurStep : TSetupStep);
 BEGIN
   IF (CurStep = ssPostInstall) THEN
@@ -702,7 +697,6 @@ BEGIN
   END;
 END;
 
-//÷∏∂®Ã¯π˝ƒƒ–©±Í◊º“≥√Ê
 FUNCTION ShouldSkipPage(PageID : INTEGER) : BOOLEAN;
 BEGIN
   IF (PageID = wpLicense) THEN Result := TRUE;
@@ -718,12 +712,11 @@ BEGIN
   IF (PageID = wpInfoAfter) THEN Result := TRUE;
 END;
 
-//–∂‘ÿ≤Ω÷Ë∏ƒ±‰ ±ª·µ˜”√¥À∫Ø ˝
 PROCEDURE CurUninstallStepChanged(CurUninstallStep : TUninstallStep);
 BEGIN
   IF (CurUninstallStep = usAppMutexCheck) THEN
   BEGIN
-    //¥ÀΩ◊∂ŒŒ™ºÏ≤È”¶”√≥Ã–Úª•≥‚µƒΩ◊∂Œ£¨«Î‘⁄¥ÀΩ¯––ª•≥‚≤Ÿ◊˜
+    //Ê≠§Èò∂ÊÆµ‰∏∫Ê£ÄÊü•Â∫îÁî®Á®ãÂ∫è‰∫íÊñ•ÁöÑÈò∂ÊÆµÔºåËØ∑Âú®Ê≠§ËøõË°å‰∫íÊñ•Êìç‰Ωú
   END;
 END;
 

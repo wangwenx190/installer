@@ -1,5 +1,5 @@
 ﻿;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;此脚本主要模仿并实现“2345好压”安装程序的界面                                                           ;
+;此脚本主要模仿并实现“SPlayer”安装程序的界面                                                           ;
 ;请使用 Unicode 版 Inno Setup 5.5.0（或更新） 编译器编译                                            ;
 ;经测试，此脚本可以在官方原版编译器、SkyGZ增强版编译器和Restools增强版编译器上完美编译通过并正常运行;
 ;令人遗憾的是原始脚本作者已不可考                                                                   ;
@@ -131,10 +131,10 @@ UninstallFilesDir={app}\Uninstaller
 
 [Languages]
 ;安装语言为简体中文，还需要其他语言请在此区段添加
-Name: "zh_CN"; MessagesFile: ".\lang\zh-CN.isl"
+Name: "en_US"; MessagesFile: ".\lang\en-US.isl"
 
 [Files]
-;包含项目文件
+;包含项目文件，正式打包项目时，请取消下一行的注释
 ;Source: ".\app\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 ;包含所有临时资源文件
 Source: ".\tmp\*"; DestDir: "{tmp}"; Flags: dontcopy solidbreak nocompression; Attribs: hidden system

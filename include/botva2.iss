@@ -1,4 +1,4 @@
-//这里存放的是botva2的函数声明
+//botva2的函数声明
 
 [Code]
 TYPE
@@ -25,5 +25,7 @@ FUNCTION  PBCallBack(P : TPBProc; ParamCount : INTEGER) : LONGWORD; EXTERNAL 'wr
 FUNCTION  CallWindowProc(lpPrevWndFunc : LONGINT; h : HWND; Msg : UINT; wParam, lParam : LONGINT) : LONGINT; EXTERNAL 'CallWindowProcA@user32.dll STDCALL';
 PROCEDURE ImgSetVisiblePart(img : LONGINT; NewLeft, NewTop, NewWidth, NewHeight : INTEGER); EXTERNAL 'ImgSetVisiblePart@files:botva2.dll STDCALL DELAYLOAD';
 FUNCTION  ReleaseCapture() : LONGINT; EXTERNAL 'ReleaseCapture@user32.dll STDCALL';
+FUNCTION  AddFontResourceEx(lpszFilename : STRING; fl : LONGINT; pdv : LONGINT) : LONGINT; EXTERNAL 'AddFontResourceExW@gdi32.dll STDCALL';
+FUNCTION  RemoveFontResourceEx(lpszFilename : STRING; fl : LONGINT; pdv : LONGINT) : BOOLEAN; EXTERNAL 'RemoveFontResourceExW@gdi32.dll STDCALL';
 FUNCTION  CreateRoundRectRgn(p1, p2, p3, p4, p5, p6 : INTEGER) : THandle; EXTERNAL 'CreateRoundRectRgn@gdi32.dll STDCALL';
 FUNCTION  SetWindowRgn(h : HWND; hRgn : THandle; bRedraw : BOOLEAN) : INTEGER; EXTERNAL 'SetWindowRgn@user32.dll STDCALL';
