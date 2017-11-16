@@ -1,5 +1,2 @@
 *.exe
-
-[Aa]pp/
-
-[Oo]utput/
+{output}/

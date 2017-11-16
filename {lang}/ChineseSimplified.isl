@@ -1,14 +1,13 @@
 ; *** Inno Setup version 5.5.3+ Chinese (Simplified) messages ***
-;                                                               ;
-; Translated by Qiming Li (qiming at clault.com)                ;
-;                                                               ;
-; 翻译文件官方下载地址：                                        ;
-; http://www.jrsoftware.org/files/istrans/                      ;
-;                                                               ;
-; 赵宇航对此文件（简体中文翻译文件 ChineseSimplified.isl）      ;
-; 的原始版本进行了部分修改                                      ;
-;                                                               ;
-;****************************************************************
+;   By Qiming Li (qiming at clault.com)
+;
+; To download user-contributed translations of this file, go to:
+;   http://www.jrsoftware.org/files/istrans/
+;
+; Note: When translating this text, do not add periods (.) to the end of
+; messages that didn't have them already, because on those messages Inno
+; Setup adds the periods automatically (appending a period would result in
+; two periods being displayed).
 
 [LangOptions]
 ; The following three entries are very important. Be sure to read and 
@@ -18,8 +17,8 @@ LanguageID=$0804
 LanguageCodePage=936
 ; If the language you are translating to requires special font faces or
 ; sizes, uncomment any of the following entries and change them accordingly.
-DialogFontName=Microsoft YaHei
-DialogFontSize=9
+DialogFontName=宋体
+;DialogFontSize=8
 ;WelcomeFontName=Verdana
 ;WelcomeFontSize=12
 ;TitleFontName=Arial
@@ -75,8 +74,8 @@ ExitSetupMessage=安装尚未完成。如果现在退出，程序将不会被安装。 %n%n您可以下次再
 AboutSetupMenuItem=关于安装向导(&A)…
 AboutSetupTitle=关于安装向导
 AboutSetupMessage=%1版本%2%n%3%n%n%1主页：%n%4
-AboutSetupNote=安装程序脚本编写：赵宇航以及其他做出过贡献的热心网友。
-TranslatorNote=Translated by Qiming Li (qiming at clault.com)
+AboutSetupNote=
+TranslatorNote=
 
 ; *** Buttons
 ButtonBack=< 上一步(&B)
