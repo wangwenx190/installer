@@ -674,7 +674,7 @@ begin
     pr := (i1 * 100) / i2;
     label_install_progress.Caption := Format('%d', [Round(pr)]) + '%';
     w := Round((560 * pr) / 100);
-    //ImgSetPosition(image_progressbar_foreground, 20, 374, w, 6);
+    ImgSetPosition(image_progressbar_foreground, 20, 374, w, 6);
     ImgSetVisiblePart(image_progressbar_foreground, 0, 0, w, 6);
     ImgApplyChanges(WizardForm.Handle);
   end;
@@ -1016,15 +1016,17 @@ begin
     BtnSetChecked(checkbox_setdefault, True);
     BtnSetVisibility(checkbox_setdefault, False);
 #endif
-    WizardForm.Height := WIZARDFORM_HEIGHT_NORMAL;
+    WizardForm.ClientHeight := WIZARDFORM_HEIGHT_NORMAL;
     ImgApplyChanges(WizardForm.Handle);
   end;
   if (CurPageID = wpInstalling) then
   begin
+    stop_animation_timer;
+    is_wizardform_show_normal := True;
+    wizardform_animation_timer := Win7_SetTimer(0, 0, 1, WrapTimerProc(@show_normal_wizardform_animation, 4));
     edit_target_path.Hide();
     label_wizardform_more_product_already_installed.Hide();
     BtnSetVisibility(button_browse, False);
-    WizardForm.Height := WIZARDFORM_HEIGHT_NORMAL;
     is_wizardform_show_normal := True;
     BtnSetVisibility(button_customize_setup, False);
     BtnSetVisibility(button_uncustomize_setup, False);
