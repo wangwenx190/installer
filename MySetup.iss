@@ -133,6 +133,7 @@ UninstallFilesDir={app}\Uninstaller
 #endif
 
 [Languages]
+Name: "english"; MessagesFile: ".\{lang}\English.isl"
 Name: "afrikaans"; MessagesFile: ".\{lang}\Afrikaans.isl"
 Name: "albanian"; MessagesFile: ".\{lang}\Albanian.isl"
 Name: "arabic"; MessagesFile: ".\{lang}\Arabic.isl"
@@ -152,7 +153,6 @@ Name: "croatian"; MessagesFile: ".\{lang}\Croatian.isl"
 Name: "czech"; MessagesFile: ".\{lang}\Czech.isl"
 Name: "danish"; MessagesFile: ".\{lang}\Danish.isl"
 Name: "dutch"; MessagesFile: ".\{lang}\Dutch.isl"
-Name: "english"; MessagesFile: ".\{lang}\English.isl"
 Name: "englishbritish"; MessagesFile: ".\{lang}\EnglishBritish.isl"
 Name: "esperanto"; MessagesFile: ".\{lang}\Esperanto.isl"
 Name: "estonian"; MessagesFile: ".\{lang}\Estonian.isl"
@@ -250,7 +250,35 @@ type
   TBtnEventProc = procedure(h : hwnd);
   TPBProc = function(h : hwnd; Msg, wParam, lParam : longint) : longint;
   Win7TTimerProc = procedure(HandleW, Msg, idEvent, TimeSys: longword);
-//  TTimerProc = procedure (h: Longword; msg: Longword; idevent: Longword; dwTime: Longword);
+  Margins = record
+    cxLeftWidth : integer;
+    cxRightWidth: integer;
+    cyTopHeight: integer;
+    cyBottomHeight: integer;
+  end;
+
+const
+  PRODUCT_REGISTRY_KEY_32 = 'SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\{#MyAppID}_is1';
+  PRODUCT_REGISTRY_KEY_64 = 'SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\{#MyAppID}_is1';
+  WM_SYSCOMMAND = $0112;
+  CS_DROPSHADOW = 131072;
+  GCL_STYLE = -26;
+  GWL_STYLE = -16;
+  ID_BUTTON_ON_CLICK_EVENT = 1;
+  WIZARDFORM_WIDTH_NORMAL = 600;
+  WIZARDFORM_HEIGHT_NORMAL = 400;
+  WIZARDFORM_HEIGHT_MORE = 503;
+
+var
+  label_wizardform_main, label_messagebox_main, label_wizardform_more_product_already_installed, label_messagebox_information, label_messagebox_title, label_wizardform_title, label_install_progress : TLabel;
+  image_wizardform_background, image_messagebox_background, image_progressbar_background, image_progressbar_foreground, PBOldProc : longint;
+  button_license, button_minimize, button_close, button_browse, button_setup_or_next, button_customize_setup, button_uncustomize_setup, checkbox_license, checkbox_setdefault, button_messagebox_close, button_messagebox_ok, button_messagebox_cancel : hwnd;
+  is_wizardform_show_normal, is_installer_initialized, is_platform_windows_7, is_wizardform_released, can_exit_setup, need_to_change_associations : boolean;
+  edit_target_path : TEdit;
+  version_installed_before : string;
+  messagebox_close : TSetupForm;
+  Taskbar_Timer, wizardform_animation_timer : longword;
+  boxFORM : TMainForm;
 
 function ImgLoad(h : hwnd; FileName : PAnsiChar; Left, Top, Width, Height : integer; Stretch, IsBkg : boolean) : longint; external 'ImgLoad@files:botva2.dll stdcall delayload';
 procedure ImgSetVisibility(img : longint; Visible : boolean); external 'ImgSetVisibility@files:botva2.dll stdcall delayload';
@@ -276,6 +304,7 @@ function SetWindowRgn(h : hwnd; hRgn : THandle; bRedraw : boolean) : integer; ex
 function ReleaseCapture() : longint; external 'ReleaseCapture@user32.dll stdcall';
 function CallWindowProc(lpPrevWndFunc : longint; h : hwnd; Msg : UINT; wParam, lParam : longint) : longint; external 'CallWindowProcW@user32.dll stdcall';
 function SetWindowLong(h : hwnd; Index : integer; NewLong : longint) : longint; external 'SetWindowLongW@user32.dll stdcall';
+function GetWindowLong(h : hwnd; Index : integer) : longint; external 'GetWindowLongW@user32.dll stdcall';
 function GetDC(hWnd: HWND): longword; external 'GetDC@user32.dll stdcall';
 function BitBlt(DestDC: longword; X, Y, Width, Height: integer; SrcDC: longword; XSrc, YSrc: integer; Rop: DWORD): BOOL; external 'BitBlt@gdi32.dll stdcall';
 function ReleaseDC(hWnd: HWND; hDC: longword): integer; external 'ReleaseDC@user32.dll stdcall';
@@ -283,28 +312,7 @@ function Win7_SetTimer(hWnd, nIDEvent, uElapse, lpTimerFunc: longword): longword
 function Win7_KillTimer(hWnd, nIDEvent: longword): longword; external 'KillTimer@user32.dll stdcall';
 function SetClassLong(h : hwnd; nIndex : integer; dwNewLong : longint) : DWORD; external 'SetClassLongW@user32.dll stdcall';
 function GetClassLong(h : hwnd; nIndex : integer) : DWORD; external 'GetClassLongW@user32.dll stdcall';
-
-const
-  PRODUCT_REGISTRY_KEY_32 = 'SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\{#MyAppID}_is1';
-  PRODUCT_REGISTRY_KEY_64 = 'SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\{#MyAppID}_is1';
-  WM_SYSCOMMAND = $0112;
-  CS_DROPSHADOW = 131072;
-  GCL_STYLE = -26;
-  ID_BUTTON_ON_CLICK_EVENT = 1;
-  WIZARDFORM_WIDTH_NORMAL = 600;
-  WIZARDFORM_HEIGHT_NORMAL = 400;
-  WIZARDFORM_HEIGHT_MORE = 503;
-
-var
-  label_wizardform_main, label_messagebox_main, label_wizardform_more_product_already_installed, label_messagebox_information, label_messagebox_title, label_wizardform_title, label_install_progress : TLabel;
-  image_wizardform_background, image_messagebox_background, image_progressbar_background, image_progressbar_foreground, PBOldProc : longint;
-  button_license, button_minimize, button_close, button_browse, button_setup_or_next, button_customize_setup, button_uncustomize_setup, checkbox_license, checkbox_setdefault, button_messagebox_close, button_messagebox_ok, button_messagebox_cancel : hwnd;
-  is_wizardform_show_normal, is_installer_initialized, is_platform_windows_7, is_wizardform_released, can_exit_setup, need_to_change_associations : boolean;
-  edit_target_path : TEdit;
-  version_installed_before : string;
-  messagebox_close : TSetupForm;
-  Taskbar_Timer, wizardform_animation_timer : longword;
-  boxFORM : TMainForm;
+function DwmExtendFrameIntoClientArea(h : hwnd; var pMarInset : MARGINS) : HRESULT; external 'DwmExtendFrameIntoClientArea@Dwmapi.dll stdcall';
 
 //停止动画计时器
 procedure stop_animation_timer;
@@ -666,7 +674,7 @@ begin
     pr := (i1 * 100) / i2;
     label_install_progress.Caption := Format('%d', [Round(pr)]) + '%';
     w := Round((560 * pr) / 100);
-    ImgSetPosition(image_progressbar_foreground, 20, 374, w, 6);
+    //ImgSetPosition(image_progressbar_foreground, 20, 374, w, 6);
     ImgSetVisiblePart(image_progressbar_foreground, 0, 0, w, 6);
     ImgApplyChanges(WizardForm.Handle);
   end;
@@ -727,7 +735,7 @@ end;
 procedure messagebox_close_create();
 begin
   messagebox_close := CreateCustomForm();
-  WITH messagebox_close do
+  with messagebox_close do
   begin
     BorderStyle := bsNone;
     ClientWidth := 380;
@@ -736,7 +744,7 @@ begin
     Caption := '';
   end;
   label_messagebox_title := TLabel.Create(messagebox_close);
-  WITH label_messagebox_title do
+  with label_messagebox_title do
   begin
     Parent := messagebox_close;
     AutoSize := False;
@@ -751,7 +759,7 @@ begin
     OnMouseDown := @messagebox_on_mouse_down;
   end;
   label_messagebox_information := TLabel.Create(messagebox_close);
-  WITH label_messagebox_information do
+  with label_messagebox_information do
   begin
     Parent := messagebox_close;
     AutoSize := False;
@@ -766,7 +774,7 @@ begin
     OnMouseDown := @messagebox_on_mouse_down;
   end;
   label_messagebox_main := TLabel.Create(messagebox_close);
-  WITH label_messagebox_main do
+  with label_messagebox_main do
   begin
     Parent := messagebox_close;
     AutoSize := False;
@@ -886,7 +894,7 @@ begin
   WizardForm.InnerNotebook.Hide();
   WizardForm.OuterNotebook.Hide();
   WizardForm.Bevel.Hide();
-  WITH WizardForm do
+  with WizardForm do
   begin
     BorderStyle := bsNone;
     Position := poDesktopCenter;
@@ -898,7 +906,7 @@ begin
     BackButton.Visible := False;
   end;
   label_wizardform_title := TLabel.Create(WizardForm);
-  WITH label_wizardform_title do
+  with label_wizardform_title do
   begin
     Parent := WizardForm;
     AutoSize := False;
@@ -913,7 +921,7 @@ begin
     OnMouseDown := @wizardform_on_mouse_down;
   end;
   label_wizardform_more_product_already_installed := TLabel.Create(WizardForm);
-  WITH label_wizardform_more_product_already_installed do
+  with label_wizardform_more_product_already_installed do
   begin
     Parent := WizardForm;
     AutoSize := False;
@@ -929,7 +937,7 @@ begin
   end;
   label_wizardform_more_product_already_installed.Hide();
   label_wizardform_main := TLabel.Create(WizardForm);
-  WITH label_wizardform_main do
+  with label_wizardform_main do
   begin
     Parent := WizardForm;
     AutoSize := False;
@@ -941,8 +949,8 @@ begin
     Transparent := True;
     OnMouseDown := @wizardform_on_mouse_down;
   end;
-  edit_target_path:= TEdit.Create(WizardForm);
-  WITH edit_target_path do
+  edit_target_path := TEdit.Create(WizardForm);
+  with edit_target_path do
   begin
     Parent := WizardForm;
     Text := WizardForm.DirEdit.Text;
@@ -1028,7 +1036,7 @@ begin
     BtnSetVisibility(button_license, False);
     BtnSetVisibility(checkbox_license, False);
     label_install_progress := TLabel.Create(WizardForm);
-    WITH label_install_progress do
+    with label_install_progress do
     begin
       Parent := WizardForm;
       AutoSize := False;
