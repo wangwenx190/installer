@@ -274,18 +274,22 @@ function WrapTimerProc(Callback: Win7TTimerProc; ParamCount: integer): longword;
 function CreateRoundRectRgn(p1, p2, p3, p4, p5, p6 : integer) : THandle; external 'CreateRoundRectRgn@gdi32.dll stdcall';
 function SetWindowRgn(h : hwnd; hRgn : THandle; bRedraw : boolean) : integer; external 'SetWindowRgn@user32.dll stdcall';
 function ReleaseCapture() : longint; external 'ReleaseCapture@user32.dll stdcall';
-function CallWindowProc(lpPrevWndFunc : longint; h : hwnd; Msg : UINT; wParam, lParam : longint) : longint; external 'CallWindowProcA@user32.dll stdcall';
-function SetWindowLong(h : hwnd; Index : integer; NewLong : longint) : longint; external 'SetWindowLongA@user32.dll stdcall';
+function CallWindowProc(lpPrevWndFunc : longint; h : hwnd; Msg : UINT; wParam, lParam : longint) : longint; external 'CallWindowProcW@user32.dll stdcall';
+function SetWindowLong(h : hwnd; Index : integer; NewLong : longint) : longint; external 'SetWindowLongW@user32.dll stdcall';
 function GetDC(hWnd: HWND): longword; external 'GetDC@user32.dll stdcall';
 function BitBlt(DestDC: longword; X, Y, Width, Height: integer; SrcDC: longword; XSrc, YSrc: integer; Rop: DWORD): BOOL; external 'BitBlt@gdi32.dll stdcall';
 function ReleaseDC(hWnd: HWND; hDC: longword): integer; external 'ReleaseDC@user32.dll stdcall';
 function Win7_SetTimer(hWnd, nIDEvent, uElapse, lpTimerFunc: longword): longword; external 'SetTimer@user32.dll stdcall';
 function Win7_KillTimer(hWnd, nIDEvent: longword): longword; external 'KillTimer@user32.dll stdcall';
+function SetClassLong(h : hwnd; nIndex : integer; dwNewLong : longint) : DWORD; external 'SetClassLongW@user32.dll stdcall';
+function GetClassLong(h : hwnd; nIndex : integer) : DWORD; external 'GetClassLongW@user32.dll stdcall';
 
 const
   PRODUCT_REGISTRY_KEY_32 = 'SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\{#MyAppID}_is1';
   PRODUCT_REGISTRY_KEY_64 = 'SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\{#MyAppID}_is1';
   WM_SYSCOMMAND = $0112;
+  CS_DROPSHADOW = 131072;
+  GCL_STYLE = -26;
   ID_BUTTON_ON_CLICK_EVENT = 1;
   WIZARDFORM_WIDTH_NORMAL = 600;
   WIZARDFORM_HEIGHT_NORMAL = 400;
@@ -299,8 +303,44 @@ var
   edit_target_path : TEdit;
   version_installed_before : string;
   messagebox_close : TSetupForm;
-  Taskbar_Timer : longword;
+  Taskbar_Timer, wizardform_animation_timer : longword;
   boxFORM : TMainForm;
+
+//停止动画计时器
+procedure stop_animation_timer;
+begin
+  if (wizardform_animation_timer <> 0) then
+  begin
+    Win7_KillTimer(0, wizardform_animation_timer);
+    wizardform_animation_timer := 0;
+  end;
+end;
+
+//窗口变大动画
+procedure show_full_wizardform_animation(HandleW, Msg, idEvent, TimeSys: longword);
+begin
+  if (WizardForm.ClientHeight < WIZARDFORM_HEIGHT_MORE) then
+  begin
+    WizardForm.ClientHeight := WizardForm.ClientHeight + 15;
+  end else
+  begin
+    stop_animation_timer;
+    WizardForm.ClientHeight := WIZARDFORM_HEIGHT_MORE;
+  end;
+end;
+
+//窗口变小动画
+procedure show_normal_wizardform_animation(HandleW, Msg, idEvent, TimeSys: longword);
+begin
+  if (WizardForm.ClientHeight > WIZARDFORM_HEIGHT_NORMAL) then
+  begin
+    WizardForm.ClientHeight := WizardForm.ClientHeight - 15;
+  end else
+  begin
+    stop_animation_timer;
+    WizardForm.ClientHeight := WIZARDFORM_HEIGHT_NORMAL;
+  end;
+end;
 
 //判断系统版本，这个是决定是否要显示任务栏缩略图的依据
 function isWin7 : boolean;
@@ -351,7 +391,11 @@ procedure deinit_taskbar;
 begin
   if isWin7 then
   begin
-    Win7_KillTimer(0, Taskbar_Timer);
+    if (Taskbar_Timer <> 0) then
+    begin
+      Win7_KillTimer(0, Taskbar_Timer);
+      Taskbar_Timer := 0;
+    end;
   end;
 end;
 
@@ -360,7 +404,7 @@ procedure shape_form_round(aForm : TForm; edgeSize : integer);
 var
   FormRegion : longword;
 begin
-  FormRegion := CreateRoundRectRgn(0, 0, aForm.Width, aForm.Height, edgeSize, edgeSize);
+  FormRegion := CreateRoundRectRgn(0, 0, aForm.ClientWidth, aForm.ClientHeight, edgeSize, edgeSize);
   SetWindowRgn(aForm.Handle, FormRegion, True);
 end;
 
@@ -464,15 +508,15 @@ begin
     for i := (oldTotal + 1) to nowTotal do
     begin
       installedVer[i] := 0;
-      total := nowTotal;
     end;
+    total := nowTotal;
   end else if (oldTotal > nowTotal) then
   begin
     for i := (nowTotal + 1) to oldTotal do
     begin
       installingVer[i] := 0;
-      total := oldTotal;
     end;
+    total := oldTotal;
   end else
   begin
     total := nowTotal;
@@ -512,7 +556,7 @@ procedure button_customize_setup_on_click(hBtn : hwnd);
 begin
   if is_wizardform_show_normal then
   begin
-    WizardForm.Height := WIZARDFORM_HEIGHT_MORE;
+    stop_animation_timer;
     image_wizardform_background := ImgLoad(WizardForm.Handle, ExpandConstant('{tmp}\background_welcome_more.png'), 0, 0, WIZARDFORM_WIDTH_NORMAL, WIZARDFORM_HEIGHT_MORE, False, True);
     edit_target_path.Show();
     BtnSetVisibility(button_browse, True);
@@ -530,19 +574,21 @@ begin
     end;
 #endif
     is_wizardform_show_normal := False;
+    wizardform_animation_timer := Win7_SetTimer(0, 0, 1, WrapTimerProc(@show_full_wizardform_animation, 4));
   end else
   begin
+    stop_animation_timer;
+    is_wizardform_show_normal := True;
+    wizardform_animation_timer := Win7_SetTimer(0, 0, 1, WrapTimerProc(@show_normal_wizardform_animation, 4));
     edit_target_path.Hide();
     label_wizardform_more_product_already_installed.Hide();
     BtnSetVisibility(button_browse, False);
 #ifdef RegisteAssociations
     BtnSetVisibility(checkbox_setdefault, False);
 #endif
-    WizardForm.Height := WIZARDFORM_HEIGHT_NORMAL;
     image_wizardform_background := ImgLoad(WizardForm.Handle, ExpandConstant('{tmp}\background_welcome.png'), 0, 0, WIZARDFORM_WIDTH_NORMAL, WIZARDFORM_HEIGHT_NORMAL, False, True);
     BtnSetVisibility(button_customize_setup, True);
     BtnSetVisibility(button_uncustomize_setup, False);
-    is_wizardform_show_normal := True;
   end;
   ImgApplyChanges(WizardForm.Handle);
 end;
@@ -746,6 +792,7 @@ end;
 procedure release_installer();
 begin
   deinit_taskbar;
+  stop_animation_timer;
   gdipShutdown();
   messagebox_close.Release();
   WizardForm.Release();
@@ -925,6 +972,8 @@ begin
   ImgApplyChanges(WizardForm.Handle);
   messagebox_close_create();
   init_taskbar;
+  SetClassLong(WizardForm.Handle, GCL_STYLE, GetClassLong(WizardForm.Handle, GCL_STYLE) or CS_DROPSHADOW);
+  SetClassLong(messagebox_close.Handle, GCL_STYLE, GetClassLong(messagebox_close.Handle, GCL_STYLE) or CS_DROPSHADOW);
 end;
 
 //安装程序销毁时会调用这个函数
@@ -933,6 +982,7 @@ begin
   if ((is_wizardform_released = False) and (can_exit_setup = False)) then
   begin
     deinit_taskbar;
+    stop_animation_timer;
     gdipShutdown();
     if is_installer_initialized then
     begin
