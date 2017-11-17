@@ -926,6 +926,7 @@ end;
 procedure release_installer();
 begin
   deinit_taskbar;
+  stop_slide_timer;
   stop_animation_timer;
   gdipShutdown();
   messagebox_close.Release();
@@ -1122,6 +1123,7 @@ begin
   if ((is_wizardform_released = False) and (can_exit_setup = False)) then
   begin
     deinit_taskbar;
+    stop_slide_timer;
     stop_animation_timer;
     gdipShutdown();
     if is_installer_initialized then
@@ -1237,7 +1239,7 @@ begin
     ImgApplyChanges(WizardForm.Handle);
 #ifdef ShowSlidePictures
     stop_slide_timer;
-	  slide_picture_timer := Win7_SetTimer(0, 0, 5, WrapTimerProc(@pictures_slides_animation, 4));
+	  slide_picture_timer := Win7_SetTimer(0, 0, 20, WrapTimerProc(@pictures_slides_animation, 4));
 #endif
   end;
   if (CurPageID = wpFinished) then
