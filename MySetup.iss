@@ -39,7 +39,7 @@
 #define OnlyInstallNewVersion
 
 ;指定是否使用自定义卸载程序
-;#define UseCustomUnsintaller
+;#define UseCustomUninstaller
 ;#define CustomUninstaller ".\{output}\Uninstall.exe"
 
 ;若想开启禁止安装旧版本的功能，此处版本号请注意一定要是
