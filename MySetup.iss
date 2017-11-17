@@ -449,6 +449,26 @@ begin
   ImgApplyChanges(WizardForm.Handle);
 end;
 
+//轮播图片点击事件：打开特定网页
+procedure slide_picture_on_click(Sender : TObject);
+var
+  URL : string;
+  ErrorCode : Integer;
+begin
+  URL := '';
+  case cur_pic_no of
+    0: URL := 'http://www.example.com/';
+    1: URL := 'http://www.example.com/';
+    2: URL := 'http://www.example.com/';
+    3: URL := 'http://www.example.com/';
+    4: URL := 'http://www.example.com/';
+  end;
+  if URL <> '' then
+  begin
+    ShellExec('open', URL, '', '', SW_SHOW, ewNoWait,  ErrorCode);
+  end;
+end;
+
 //停止轮播计时器
 procedure stop_slide_timer;
 begin
@@ -1115,6 +1135,8 @@ begin
   SetClassLong(WizardForm.Handle, GCL_STYLE, GetClassLong(WizardForm.Handle, GCL_STYLE) or CS_DROPSHADOW);
   SetClassLong(messagebox_close.Handle, GCL_STYLE, GetClassLong(messagebox_close.Handle, GCL_STYLE) or CS_DROPSHADOW);
   init_taskbar;
+  cur_pic_no := 0;
+  cur_pic_pos := 0;
 end;
 
 //安装程序销毁时会调用这个函数
