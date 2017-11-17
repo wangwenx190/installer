@@ -113,7 +113,7 @@ DisableReadyPage                = yes
 TimeStampsInUTC                 = yes
 #IF VER >= EncodeVer(5,5,9)
 SetupMutex                      = {{#MyAppID}Setup,Global\{{#MyAppID}Setup
-AppMutex                        = {#MyAppMutex}
+AppMutex                        = {{#MyAppMutex}
 #endif
 LanguageDetectionMethod         = uilanguage
 ShowLanguageDialog              = no
