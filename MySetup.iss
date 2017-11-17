@@ -25,7 +25,7 @@
 ;#define Windows7AndNewer
 
 ;指定是否要注册相关后缀名
-#define RegisteAssociations
+;#define RegisteAssociations
 
 ;指定是否为绿色版安装程序（仅释放文件，不写入注册表条目，也不生成卸载程序）
 ;#define PortableBuild
