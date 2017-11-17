@@ -48,7 +48,7 @@
 
 ## 效果预览
 安装程序实际效果很好，但GIF动画看起来比较卡，播放速度很慢，我也不清楚是怎么回事。
-![01](/{snap}/snap01.gif)
+![Snap](/{snap}/snap.gif)
 
 ## 支持平台
 - 此脚本打包的安装程序已在**Microsoft Windows XP SP3（仅32位）、Windows 7 SP1、Windows 8.1 with Update 1 以及 Windows 10 1507、1511、1607、1703、1709 32位&64位操作系统**上测试通过，目标功能全部完美实现，无任何BUG
