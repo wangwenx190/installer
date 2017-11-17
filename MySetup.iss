@@ -250,12 +250,6 @@ type
   TBtnEventProc = procedure(h : hwnd);
   TPBProc = function(h : hwnd; Msg, wParam, lParam : longint) : longint;
   Win7TTimerProc = procedure(HandleW, Msg, idEvent, TimeSys: longword);
-  Margins = record
-    cxLeftWidth : integer;
-    cxRightWidth: integer;
-    cyTopHeight: integer;
-    cyBottomHeight: integer;
-  end;
 
 const
   PRODUCT_REGISTRY_KEY_32 = 'SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\{#MyAppID}_is1';
@@ -263,7 +257,6 @@ const
   WM_SYSCOMMAND = $0112;
   CS_DROPSHADOW = 131072;
   GCL_STYLE = -26;
-  GWL_STYLE = -16;
   ID_BUTTON_ON_CLICK_EVENT = 1;
   WIZARDFORM_WIDTH_NORMAL = 600;
   WIZARDFORM_HEIGHT_NORMAL = 400;
@@ -312,7 +305,6 @@ function Win7_SetTimer(hWnd, nIDEvent, uElapse, lpTimerFunc: longword): longword
 function Win7_KillTimer(hWnd, nIDEvent: longword): longword; external 'KillTimer@user32.dll stdcall';
 function SetClassLong(h : hwnd; nIndex : integer; dwNewLong : longint) : DWORD; external 'SetClassLongW@user32.dll stdcall';
 function GetClassLong(h : hwnd; nIndex : integer) : DWORD; external 'GetClassLongW@user32.dll stdcall';
-function DwmExtendFrameIntoClientArea(h : hwnd; var pMarInset : MARGINS) : HRESULT; external 'DwmExtendFrameIntoClientArea@Dwmapi.dll stdcall';
 
 //停止动画计时器
 procedure stop_animation_timer;
@@ -329,7 +321,7 @@ procedure show_full_wizardform_animation(HandleW, Msg, idEvent, TimeSys: longwor
 begin
   if (WizardForm.ClientHeight < WIZARDFORM_HEIGHT_MORE) then
   begin
-    WizardForm.ClientHeight := WizardForm.ClientHeight + 15;
+    WizardForm.ClientHeight := WizardForm.ClientHeight + 10;
   end else
   begin
     stop_animation_timer;
@@ -342,7 +334,7 @@ procedure show_normal_wizardform_animation(HandleW, Msg, idEvent, TimeSys: longw
 begin
   if (WizardForm.ClientHeight > WIZARDFORM_HEIGHT_NORMAL) then
   begin
-    WizardForm.ClientHeight := WizardForm.ClientHeight - 15;
+    WizardForm.ClientHeight := WizardForm.ClientHeight - 10;
   end else
   begin
     stop_animation_timer;
@@ -566,34 +558,15 @@ begin
   begin
     stop_animation_timer;
     image_wizardform_background := ImgLoad(WizardForm.Handle, ExpandConstant('{tmp}\background_welcome_more.png'), 0, 0, WIZARDFORM_WIDTH_NORMAL, WIZARDFORM_HEIGHT_MORE, False, True);
-    edit_target_path.Show();
-    BtnSetVisibility(button_browse, True);
-#ifdef RegisteAssociations
-    BtnSetVisibility(checkbox_setdefault, True);
-#endif
-    BtnSetVisibility(button_customize_setup, False);
-    BtnSetVisibility(button_uncustomize_setup, True);
-#ifndef PortableBuild
-    if is_installed_before() then
-    begin
-      edit_target_path.Enabled := False;
-      BtnSetEnabled(button_browse, False);
-      label_wizardform_more_product_already_installed.Show();
-    end;
-#endif
     is_wizardform_show_normal := False;
     wizardform_animation_timer := Win7_SetTimer(0, 0, 1, WrapTimerProc(@show_full_wizardform_animation, 4));
+    BtnSetVisibility(button_customize_setup, False);
+    BtnSetVisibility(button_uncustomize_setup, True);
   end else
   begin
     stop_animation_timer;
     is_wizardform_show_normal := True;
     wizardform_animation_timer := Win7_SetTimer(0, 0, 1, WrapTimerProc(@show_normal_wizardform_animation, 4));
-    edit_target_path.Hide();
-    label_wizardform_more_product_already_installed.Hide();
-    BtnSetVisibility(button_browse, False);
-#ifdef RegisteAssociations
-    BtnSetVisibility(checkbox_setdefault, False);
-#endif
     image_wizardform_background := ImgLoad(WizardForm.Handle, ExpandConstant('{tmp}\background_welcome.png'), 0, 0, WIZARDFORM_WIDTH_NORMAL, WIZARDFORM_HEIGHT_NORMAL, False, True);
     BtnSetVisibility(button_customize_setup, True);
     BtnSetVisibility(button_uncustomize_setup, False);
@@ -1014,7 +987,19 @@ begin
     checkbox_setdefault := BtnCreate(WizardForm.Handle, 85, 470, 92, 17, ExpandConstant('{tmp}\checkbox_setdefault.png'), 0, True);
     BtnSetEvent(checkbox_setdefault, ID_BUTTON_ON_CLICK_EVENT, WrapBtnCallback(@checkbox_setdefault_on_click, 1));
     BtnSetChecked(checkbox_setdefault, True);
-    BtnSetVisibility(checkbox_setdefault, False);
+    BtnSetVisibility(checkbox_setdefault, True);
+#endif
+    edit_target_path.Show();
+    BtnSetVisibility(button_browse, True);
+    BtnSetVisibility(button_customize_setup, True);
+    BtnSetVisibility(button_uncustomize_setup, False);
+#ifndef PortableBuild
+    if is_installed_before() then
+    begin
+      edit_target_path.Enabled := False;
+      BtnSetEnabled(button_browse, False);
+      label_wizardform_more_product_already_installed.Show();
+    end;
 #endif
     WizardForm.ClientHeight := WIZARDFORM_HEIGHT_NORMAL;
     ImgApplyChanges(WizardForm.Handle);
