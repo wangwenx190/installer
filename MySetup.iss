@@ -56,8 +56,8 @@
 #define MyAppComments "备注"
 #define MyAppContact MyAppPublisher
 #define MyAppSupportPhone "13510102020"
-#define MyAppReadmeURL "https://github.com/wangwenx190/InternetFashionedInstaller/blob/master/README.md"
-#define MyAppLicenseURL "https://github.com/wangwenx190/InternetFashionedInstaller/blob/master/LICENSE"
+#define MyAppReadmeURL "https://github.com/wangwenx190/InternetFashionedInstaller/blob/2345HaoZip/README.md"
+#define MyAppLicenseURL "https://github.com/wangwenx190/InternetFashionedInstaller/blob/2345HaoZip/LICENSE"
 #define MyAppCopyrightYear "2017"
 #define MyAppCopyright "版权所有 © " + MyAppCopyrightYear + ", " + MyAppPublisher
 
