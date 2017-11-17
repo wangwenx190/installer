@@ -18,6 +18,8 @@
   #error Please use **UNICODE** edition of Inno Setup !!!
 #endif
 
+#include ".\version.h"
+
 ;指定是否为64位安装程序
 ;#define x64Build
 
@@ -27,188 +29,253 @@
 ;指定是否要注册相关后缀名
 ;#define RegisteAssociations
 
+;指定是否在安装时轮播图片
+#define ShowSlidePictures
+
 ;指定是否为绿色版安装程序（仅释放文件，不写入注册表条目，也不生成卸载程序）
 ;#define PortableBuild
 
 ;指定是否只能安装新版本，而不能用旧版本覆盖新版本
-#define OnlyInstallNewVersion 
+#define OnlyInstallNewVersion
 
-#ifdef x64Build
-  #define MyAppID "{D5FB0325-ED97-46CD-B11C-A199551F529C}"
-  #define MyAppName "My Program" + " " + "x64"
-  #define MyAppExeName "MyProg64.exe"
-  #define MyAppMutex MyAppName
-#else
-  #define MyAppID "{BDEF4E0C-B337-49C7-8D85-51B8505235FF}"
-  #define MyAppName "My Program"
-  #define MyAppExeName "MyProg.exe"
-  #define MyAppMutex MyAppName
-#endif
+;指定是否使用自定义卸载程序
+;#define UseCustomUnsintaller
+;#define CustomUninstaller ".\{output}\Uninstall.exe"
 
 ;若想开启禁止安装旧版本的功能，此处版本号请注意一定要是
 ;点分十进制的正整数，除数字和英文半角句点以外不允许出现任何其他字符，
 ;否则程序无法判断版本的高低。
-#define MyAppVersion "1.0.0"
-#define MyAppPublisher "My Company, Inc."
-#define MyAppPublisherURL "http://www.example.com/"
-#define MyAppSupportURL MyAppPublisherURL
-#define MyAppUpdatesURL MyAppPublisherURL
-#define MyAppComments "备注"
-#define MyAppContact MyAppPublisher
-#define MyAppSupportPhone "13510102020"
-#define MyAppReadmeURL "https://github.com/wangwenx190/InternetFashionedInstaller/blob/2345HaoZip/README.md"
-#define MyAppLicenseURL "https://github.com/wangwenx190/InternetFashionedInstaller/blob/2345HaoZip/LICENSE"
-#define MyAppCopyrightYear "2017"
-#define MyAppCopyright "版权所有 © " + MyAppCopyrightYear + ", " + MyAppPublisher
-
-[Setup]
-AppId={{#MyAppID}
-AppName={#MyAppName}
-AppVersion={#MyAppVersion}
-AppVerName={#MyAppName} {#MyAppVersion}
-AppPublisher={#MyAppPublisher}
-AppPublisherURL={#MyAppPublisherURL}
-AppSupportURL={#MyAppSupportURL}
-AppUpdatesURL={#MyAppUpdatesURL}
-AppComments={#MyAppComments}
-AppContact={#MyAppContact}
-AppSupportPhone={#MyAppSupportPhone}
-AppReadmeFile={#MyAppReadmeURL}
-AppCopyright={#MyAppCopyright}
-DefaultGroupName={#MyAppPublisher}\{#MyAppName}
-VersionInfoDescription={#MyAppName} 安装程序
-VersionInfoProductName={#MyAppName}
-VersionInfoCompany={#MyAppPublisher}
-VersionInfoCopyright={#MyAppCopyright}
-VersionInfoProductVersion={#MyAppVersion}
-VersionInfoProductTextVersion={#MyAppVersion}
-VersionInfoTextVersion={#MyAppVersion}
-VersionInfoVersion={#MyAppVersion}
-OutputDir=.\{output}
-SetupIconFile=.\MySetup.ico
-Compression=lzma2/ultra64
-InternalCompressLevel=ultra64
-SolidCompression=yes
-DisableProgramGroupPage=yes
-DisableDirPage=yes
-DisableReadyMemo=yes
-DisableReadyPage=yes
-TimeStampsInUTC=yes
-#IF VER >= EncodeVer(5,5,9)
-SetupMutex={{#MyAppID}Installer,Global\{{#MyAppID}Installer
-AppMutex={#MyAppMutex}
-#endif
-LanguageDetectionMethod=uilanguage
-ShowLanguageDialog=no
-AllowCancelDuringInstall=no
+#define MyAppVersion      str(EX_VERSION_MAJOR) + "." + str(EX_VERSION_MINOR) + "." + str(EX_VERSION_PATCH) + "." + str(EX_VERSION_BUILD)
+#define MyAppPublisher    str(EX_COMPANY_NAME_STR)
+#define MyAppPublisherURL str(EX_COMPANY_URL_STR)
+#define MyAppSupportURL   str(EX_SUPPORT_URL_STR)
+#define MyAppUpdatesURL   str(EX_UPDATE_URL_STR)
+#define MyAppComments     str(EX_COMMENTS_STR)
+#define MyAppContact      str(EX_CONTACT_STR)
+#define MyAppSupportPhone str(EX_SUPPORT_PHONE_STR)
+#define MyAppReadmeURL    str(EX_README_URL_STR)
+#define MyAppLicenseURL   str(EX_LICENSE_URL_STR)
+#define MyAppCopyright    str(EX_COPYRIGHT_STR)
+#define MyAppBaseBinDir   ".\{app}"
 #ifdef x64Build
-ArchitecturesAllowed=x64
-ArchitecturesInstallIn64BitMode=x64
-DefaultDirName={pf64}\{#MyAppPublisher}\{#MyAppName}
+  #define MyAppBinDir     AddBackslash(MyAppBaseBinDir) + "ex_x64"
+  #define MyAppID         str(EX_APP_ID_64_STR)
+  #define MyAppName       str(EX_APP_NAME_STR) + "(64-bit)"
+  #define MyAppExeName    "MyApp64.exe"
+  #define MyAppMutex      str(EX_APP_MUTEX_64_STR)
+  #define MyAppSetupExe   MyAppName + "_" + MyAppVersion + "_x64"
 #else
-ArchitecturesAllowed=x86 x64
-DefaultDirName={pf32}\{#MyAppPublisher}\{#MyAppName}
-#endif
-#ifdef Windows7AndNewer
-MinVersion=0,6.1.7600
-#else
-MinVersion=0,5.1.2600
-#endif
-#ifdef RegisteAssociations
-ChangesAssociations=yes
-#else
-ChangesAssociations=no
+  #define MyAppBinDir     AddBackslash(MyAppBaseBinDir) + "ex_x86"
+  #define MyAppID         str(EX_APP_ID_32_STR)
+  #define MyAppName       str(EX_APP_NAME_STR)
+  #define MyAppExeName    "MyApp.exe"
+  #define MyAppMutex      str(EX_APP_MUTEX_32_STR)
+  #define MyAppSetupExe   MyAppName + "_" + MyAppVersion + "_x86"
 #endif
 #ifdef PortableBuild
-Uninstallable=no
-PrivilegesRequired=lowest
-OutputBaseFilename={#MyAppName}_{#MyAppVersion}_Portable
+  #define MyAppSetupExe   MyAppSetupExe + "_" + "Portable"
 #else
-Uninstallable=yes
-PrivilegesRequired=admin
-OutputBaseFilename={#MyAppName}_{#MyAppVersion}_Setup
-UninstallDisplayName={#MyAppName}
-UninstallDisplayIcon={uninstallexe},0
-UninstallFilesDir={app}\Uninstaller
+  #define MyAppSetupExe   MyAppSetupExe + "_" + "Setup"
 #endif
 
+[Setup]
+AppId                           = {{#MyAppID}
+AppName                         = {#MyAppName}
+AppVersion                      = {#MyAppVersion}
+AppVerName                      = {#MyAppName} {#MyAppVersion}
+AppPublisher                    = {#MyAppPublisher}
+AppPublisherURL                 = {#MyAppPublisherURL}
+AppSupportURL                   = {#MyAppSupportURL}
+AppUpdatesURL                   = {#MyAppUpdatesURL}
+AppComments                     = {#MyAppComments}
+AppContact                      = {#MyAppContact}
+AppSupportPhone                 = {#MyAppSupportPhone}
+AppReadmeFile                   = {#MyAppReadmeURL}
+AppCopyright                    = {#MyAppCopyright}
+DefaultGroupName                = {#MyAppName}
+VersionInfoDescription          = {#MyAppName} Setup
+VersionInfoProductName          = {#MyAppName}
+VersionInfoCompany              = {#MyAppPublisher}
+VersionInfoCopyright            = {#MyAppCopyright}
+VersionInfoProductVersion       = {#MyAppVersion}
+VersionInfoProductTextVersion   = {#MyAppVersion}
+VersionInfoTextVersion          = {#MyAppVersion}
+VersionInfoVersion              = {#MyAppVersion}
+OutputDir                       = ".\{output}"
+SetupIconFile                   = ".\MySetup.ico"
+Compression                     = lzma2/ultra64
+InternalCompressLevel           = ultra64
+SolidCompression                = yes
+DisableProgramGroupPage         = yes
+DisableDirPage                  = yes
+DisableReadyMemo                = yes
+DisableReadyPage                = yes
+TimeStampsInUTC                 = yes
+#IF VER >= EncodeVer(5,5,9)
+SetupMutex                      = {{#MyAppID}Setup,Global\{{#MyAppID}Setup
+AppMutex                        = {#MyAppMutex}
+#endif
+LanguageDetectionMethod         = uilanguage
+ShowLanguageDialog              = no
+AllowCancelDuringInstall        = no
+#ifdef x64Build
+ArchitecturesAllowed            = x64
+ArchitecturesInstallIn64BitMode = x64
+DefaultDirName                  = {pf64}\{#MyAppPublisher}\{#MyAppName}
+#else
+ArchitecturesAllowed            = x86 x64
+DefaultDirName                  = {pf32}\{#MyAppPublisher}\{#MyAppName}
+#endif
+#ifdef Windows7AndNewer
+MinVersion                      = 0,6.1.7600
+#else
+MinVersion                      = 0,5.1.2600
+#endif
+#ifdef RegisteAssociations
+ChangesAssociations             = yes
+#else
+ChangesAssociations             = no
+#endif
+#ifdef PortableBuild
+Uninstallable                   = no
+PrivilegesRequired              = lowest 
+#else
+Uninstallable                   = yes
+PrivilegesRequired              = admin
+UninstallDisplayName            = {#MyAppName}
+UninstallDisplayIcon            = {uninstallexe},0
+UninstallFilesDir               = {app}\Uninstaller
+#endif
+OutputBaseFilename              = {#MyAppSetupExe}
+
 [Languages]
-Name: "english"; MessagesFile: ".\{lang}\English.isl"
-Name: "afrikaans"; MessagesFile: ".\{lang}\Afrikaans.isl"
-Name: "albanian"; MessagesFile: ".\{lang}\Albanian.isl"
-Name: "arabic"; MessagesFile: ".\{lang}\Arabic.isl"
-Name: "armenian"; MessagesFile: ".\{lang}\Armenian.islu"
-Name: "asturian"; MessagesFile: ".\{lang}\Asturian.isl"
-Name: "basque"; MessagesFile: ".\{lang}\Basque.isl"
-Name: "belarusian"; MessagesFile: ".\{lang}\Belarusian.isl"
-Name: "bengali"; MessagesFile: ".\{lang}\Bengali.islu"
-Name: "bosnian"; MessagesFile: ".\{lang}\Bosnian.isl"
+Name: "english";             MessagesFile: ".\{lang}\English.isl"
+Name: "chinesesimplified";   MessagesFile: ".\{lang}\ChineseSimplified.isl"
+Name: "afrikaans";           MessagesFile: ".\{lang}\Afrikaans.isl"
+Name: "albanian";            MessagesFile: ".\{lang}\Albanian.isl"
+Name: "arabic";              MessagesFile: ".\{lang}\Arabic.isl"
+Name: "armenian";            MessagesFile: ".\{lang}\Armenian.islu"
+Name: "asturian";            MessagesFile: ".\{lang}\Asturian.isl"
+Name: "basque";              MessagesFile: ".\{lang}\Basque.isl"
+Name: "belarusian";          MessagesFile: ".\{lang}\Belarusian.isl"
+Name: "bengali";             MessagesFile: ".\{lang}\Bengali.islu"
+Name: "bosnian";             MessagesFile: ".\{lang}\Bosnian.isl"
 Name: "brazilianportuguese"; MessagesFile: ".\{lang}\BrazilianPortuguese.isl"
-Name: "bulgarian"; MessagesFile: ".\{lang}\Bulgarian.isl"
-Name: "catalan"; MessagesFile: ".\{lang}\Catalan.isl"
-Name: "chinesesimplified"; MessagesFile: ".\{lang}\ChineseSimplified.isl"
-Name: "chinesetraditional"; MessagesFile: ".\{lang}\ChineseTraditional.isl"
-Name: "corsican"; MessagesFile: ".\{lang}\Corsican.isl"
-Name: "croatian"; MessagesFile: ".\{lang}\Croatian.isl"
-Name: "czech"; MessagesFile: ".\{lang}\Czech.isl"
-Name: "danish"; MessagesFile: ".\{lang}\Danish.isl"
-Name: "dutch"; MessagesFile: ".\{lang}\Dutch.isl"
-Name: "englishbritish"; MessagesFile: ".\{lang}\EnglishBritish.isl"
-Name: "esperanto"; MessagesFile: ".\{lang}\Esperanto.isl"
-Name: "estonian"; MessagesFile: ".\{lang}\Estonian.isl"
-Name: "farsi"; MessagesFile: ".\{lang}\Farsi.isl"
-Name: "finnish"; MessagesFile: ".\{lang}\Finnish.isl"
-Name: "french"; MessagesFile: ".\{lang}\French.isl"
-Name: "galician"; MessagesFile: ".\{lang}\Galician.isl"
-Name: "georgian"; MessagesFile: ".\{lang}\Georgian.islu"
-Name: "german"; MessagesFile: ".\{lang}\German.isl"
-Name: "greek"; MessagesFile: ".\{lang}\Greek.isl"
-Name: "hebrew"; MessagesFile: ".\{lang}\Hebrew.isl"
-Name: "hindi"; MessagesFile: ".\{lang}\Hindi.islu"
-Name: "hungarian"; MessagesFile: ".\{lang}\Hungarian.isl"
-Name: "icelandic"; MessagesFile: ".\{lang}\Icelandic.isl"
-Name: "indonesian"; MessagesFile: ".\{lang}\Indonesian.isl"
-Name: "italian"; MessagesFile: ".\{lang}\Italian.isl"
-Name: "japanese"; MessagesFile: ".\{lang}\Japanese.isl"
-Name: "kazakh"; MessagesFile: ".\{lang}\Kazakh.islu"
-Name: "korean"; MessagesFile: ".\{lang}\Korean.isl"
-Name: "kurdish"; MessagesFile: ".\{lang}\Kurdish.isl"
-Name: "latvian"; MessagesFile: ".\{lang}\Latvian.isl"
-Name: "ligurian"; MessagesFile: ".\{lang}\Ligurian.isl"
-Name: "lithuanian"; MessagesFile: ".\{lang}\Lithuanian.isl"
-Name: "luxemburgish"; MessagesFile: ".\{lang}\Luxemburgish.isl"
-Name: "macedonian"; MessagesFile: ".\{lang}\Macedonian.isl"
-Name: "malaysian"; MessagesFile: ".\{lang}\Malaysian.isl"
-Name: "mongolian"; MessagesFile: ".\{lang}\Mongolian.isl"
-Name: "montenegrian"; MessagesFile: ".\{lang}\Montenegrian.isl"
-Name: "nepali"; MessagesFile: ".\{lang}\Nepali.islu"
-Name: "norwegian"; MessagesFile: ".\{lang}\Norwegian.isl"
-Name: "norwegiannynorsk"; MessagesFile: ".\{lang}\NorwegianNynorsk.isl"
-Name: "occitan"; MessagesFile: ".\{lang}\Occitan.isl"
-Name: "polish"; MessagesFile: ".\{lang}\Polish.isl"
-Name: "portuguese"; MessagesFile: ".\{lang}\Portuguese.isl"
-Name: "romanian"; MessagesFile: ".\{lang}\Romanian.isl"
-Name: "russian"; MessagesFile: ".\{lang}\Russian.isl"
-Name: "scottishgaelic"; MessagesFile: ".\{lang}\ScottishGaelic.isl"
-Name: "serbiancyrillic"; MessagesFile: ".\{lang}\SerbianCyrillic.isl"
-Name: "serbianlatin"; MessagesFile: ".\{lang}\SerbianLatin.isl"
-Name: "slovak"; MessagesFile: ".\{lang}\Slovak.isl"
-Name: "slovenian"; MessagesFile: ".\{lang}\Slovenian.isl"
-Name: "spanish"; MessagesFile: ".\{lang}\Spanish.isl"
-Name: "swedish"; MessagesFile: ".\{lang}\Swedish.isl"
-Name: "tatar"; MessagesFile: ".\{lang}\Tatar.isl"
-Name: "thai"; MessagesFile: ".\{lang}\Thai.isl"
-Name: "turkish"; MessagesFile: ".\{lang}\Turkish.isl"
-Name: "ukrainian"; MessagesFile: ".\{lang}\Ukrainian.isl"
-Name: "uzbek"; MessagesFile: ".\{lang}\Uzbek.isl"
-Name: "valencian"; MessagesFile: ".\{lang}\Valencian.isl"
-Name: "vietnamese"; MessagesFile: ".\{lang}\Vietnamese.isl"
+Name: "bulgarian";           MessagesFile: ".\{lang}\Bulgarian.isl"
+Name: "catalan";             MessagesFile: ".\{lang}\Catalan.isl"
+Name: "chinesetraditional";  MessagesFile: ".\{lang}\ChineseTraditional.isl"
+Name: "corsican";            MessagesFile: ".\{lang}\Corsican.isl"
+Name: "croatian";            MessagesFile: ".\{lang}\Croatian.isl"
+Name: "czech";               MessagesFile: ".\{lang}\Czech.isl"
+Name: "danish";              MessagesFile: ".\{lang}\Danish.isl"
+Name: "dutch";               MessagesFile: ".\{lang}\Dutch.isl"
+Name: "englishbritish";      MessagesFile: ".\{lang}\EnglishBritish.isl"
+Name: "esperanto";           MessagesFile: ".\{lang}\Esperanto.isl"
+Name: "estonian";            MessagesFile: ".\{lang}\Estonian.isl"
+Name: "farsi";               MessagesFile: ".\{lang}\Farsi.isl"
+Name: "finnish";             MessagesFile: ".\{lang}\Finnish.isl"
+Name: "french";              MessagesFile: ".\{lang}\French.isl"
+Name: "galician";            MessagesFile: ".\{lang}\Galician.isl"
+Name: "georgian";            MessagesFile: ".\{lang}\Georgian.islu"
+Name: "german";              MessagesFile: ".\{lang}\German.isl"
+Name: "greek";               MessagesFile: ".\{lang}\Greek.isl"
+Name: "hebrew";              MessagesFile: ".\{lang}\Hebrew.isl"
+Name: "hindi";               MessagesFile: ".\{lang}\Hindi.islu"
+Name: "hungarian";           MessagesFile: ".\{lang}\Hungarian.isl"
+Name: "icelandic";           MessagesFile: ".\{lang}\Icelandic.isl"
+Name: "indonesian";          MessagesFile: ".\{lang}\Indonesian.isl"
+Name: "italian";             MessagesFile: ".\{lang}\Italian.isl"
+Name: "japanese";            MessagesFile: ".\{lang}\Japanese.isl"
+Name: "kazakh";              MessagesFile: ".\{lang}\Kazakh.islu"
+Name: "korean";              MessagesFile: ".\{lang}\Korean.isl"
+Name: "kurdish";             MessagesFile: ".\{lang}\Kurdish.isl"
+Name: "latvian";             MessagesFile: ".\{lang}\Latvian.isl"
+Name: "ligurian";            MessagesFile: ".\{lang}\Ligurian.isl"
+Name: "lithuanian";          MessagesFile: ".\{lang}\Lithuanian.isl"
+Name: "luxemburgish";        MessagesFile: ".\{lang}\Luxemburgish.isl"
+Name: "macedonian";          MessagesFile: ".\{lang}\Macedonian.isl"
+Name: "malaysian";           MessagesFile: ".\{lang}\Malaysian.isl"
+Name: "mongolian";           MessagesFile: ".\{lang}\Mongolian.isl"
+Name: "montenegrian";        MessagesFile: ".\{lang}\Montenegrian.isl"
+Name: "nepali";              MessagesFile: ".\{lang}\Nepali.islu"
+Name: "norwegian";           MessagesFile: ".\{lang}\Norwegian.isl"
+Name: "norwegiannynorsk";    MessagesFile: ".\{lang}\NorwegianNynorsk.isl"
+Name: "occitan";             MessagesFile: ".\{lang}\Occitan.isl"
+Name: "polish";              MessagesFile: ".\{lang}\Polish.isl"
+Name: "portuguese";          MessagesFile: ".\{lang}\Portuguese.isl"
+Name: "romanian";            MessagesFile: ".\{lang}\Romanian.isl"
+Name: "russian";             MessagesFile: ".\{lang}\Russian.isl"
+Name: "scottishgaelic";      MessagesFile: ".\{lang}\ScottishGaelic.isl"
+Name: "serbiancyrillic";     MessagesFile: ".\{lang}\SerbianCyrillic.isl"
+Name: "serbianlatin";        MessagesFile: ".\{lang}\SerbianLatin.isl"
+Name: "slovak";              MessagesFile: ".\{lang}\Slovak.isl"
+Name: "slovenian";           MessagesFile: ".\{lang}\Slovenian.isl"
+Name: "spanish";             MessagesFile: ".\{lang}\Spanish.isl"
+Name: "swedish";             MessagesFile: ".\{lang}\Swedish.isl"
+Name: "tatar";               MessagesFile: ".\{lang}\Tatar.isl"
+Name: "thai";                MessagesFile: ".\{lang}\Thai.isl"
+Name: "turkish";             MessagesFile: ".\{lang}\Turkish.isl"
+Name: "ukrainian";           MessagesFile: ".\{lang}\Ukrainian.isl"
+Name: "uzbek";               MessagesFile: ".\{lang}\Uzbek.isl"
+Name: "valencian";           MessagesFile: ".\{lang}\Valencian.isl"
+Name: "vietnamese";          MessagesFile: ".\{lang}\Vietnamese.isl"
+
+[CustomMessages]
+;English
+english.messagebox_close_title              = {#MyAppName} Setup
+english.messagebox_close_text               = Are you sure to abort {#MyAppName} setup?
+english.init_setup_outdated_version_warning = You have already installed a newer version of {#MyAppName}, so you are not allowed to continue. Click <OK> to abort.
+english.wizardform_title                    = {#MyAppName} V{#MyAppVersion} Setup
+english.no_change_destdir_warning           = You are not allowed to change destination folder.
+english.installing_label_text               = Installing
+;简体中文
+chinesesimplified.messagebox_close_title              = {#MyAppName} 安装
+chinesesimplified.messagebox_close_text               = 您确定要退出“{#MyAppName}”安装程序吗？
+chinesesimplified.init_setup_outdated_version_warning = 您已安装更新版本的“{#MyAppName}”，不允许使用旧版本替换新版本，请单击“确定”按钮退出此安装程序。
+chinesesimplified.wizardform_title                    = {#MyAppName} V{#MyAppVersion} 安装
+chinesesimplified.no_change_destdir_warning           = 软件已经安装，不允许更换目录。
+chinesesimplified.installing_label_text               = 正在安装
 
 [Files]
-;包含项目文件
-Source: ".\{app}\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 ;包含所有临时资源文件
-Source: ".\{tmp}\*"; DestDir: "{tmp}"; Flags: dontcopy solidbreak; Attribs: hidden system
+Source: ".\{tmp}\background_finish.png";        DestDir: "{tmp}"; Flags: dontcopy solidbreak; Attribs: hidden system
+Source: ".\{tmp}\background_installing.png";    DestDir: "{tmp}"; Flags: dontcopy solidbreak; Attribs: hidden system
+Source: ".\{tmp}\background_messagebox.png";    DestDir: "{tmp}"; Flags: dontcopy solidbreak; Attribs: hidden system
+Source: ".\{tmp}\background_welcome.png";       DestDir: "{tmp}"; Flags: dontcopy solidbreak; Attribs: hidden system
+Source: ".\{tmp}\background_welcome_more.png";  DestDir: "{tmp}"; Flags: dontcopy solidbreak; Attribs: hidden system
+Source: ".\{tmp}\botva2.dll";                   DestDir: "{tmp}"; Flags: dontcopy solidbreak; Attribs: hidden system
+Source: ".\{tmp}\button_browse.png";            DestDir: "{tmp}"; Flags: dontcopy solidbreak; Attribs: hidden system
+Source: ".\{tmp}\button_cancel.png";            DestDir: "{tmp}"; Flags: dontcopy solidbreak; Attribs: hidden system
+Source: ".\{tmp}\button_close.png";             DestDir: "{tmp}"; Flags: dontcopy solidbreak; Attribs: hidden system
+Source: ".\{tmp}\button_customize_setup.png";   DestDir: "{tmp}"; Flags: dontcopy solidbreak; Attribs: hidden system
+Source: ".\{tmp}\button_finish.png";            DestDir: "{tmp}"; Flags: dontcopy solidbreak; Attribs: hidden system
+Source: ".\{tmp}\button_license.png";           DestDir: "{tmp}"; Flags: dontcopy solidbreak; Attribs: hidden system
+Source: ".\{tmp}\button_minimize.png";          DestDir: "{tmp}"; Flags: dontcopy solidbreak; Attribs: hidden system
+Source: ".\{tmp}\button_ok.png";                DestDir: "{tmp}"; Flags: dontcopy solidbreak; Attribs: hidden system
+Source: ".\{tmp}\button_setup_or_next.png";     DestDir: "{tmp}"; Flags: dontcopy solidbreak; Attribs: hidden system
+Source: ".\{tmp}\button_uncustomize_setup.png"; DestDir: "{tmp}"; Flags: dontcopy solidbreak; Attribs: hidden system
+Source: ".\{tmp}\checkbox_license.png";         DestDir: "{tmp}"; Flags: dontcopy solidbreak; Attribs: hidden system
+#ifdef RegisteAssociations
+Source: ".\{tmp}\checkbox_setdefault.png";      DestDir: "{tmp}"; Flags: dontcopy solidbreak; Attribs: hidden system
+#endif
+Source: ".\{tmp}\InnoCallback.dll";             DestDir: "{tmp}"; Flags: dontcopy solidbreak; Attribs: hidden system
+Source: ".\{tmp}\progressbar_background.png";   DestDir: "{tmp}"; Flags: dontcopy solidbreak; Attribs: hidden system
+Source: ".\{tmp}\progressbar_foreground.png";   DestDir: "{tmp}"; Flags: dontcopy solidbreak; Attribs: hidden system
+#ifdef ShowSlidePictures
+Source: ".\{tmp}\slides_picture_1.png";         DestDir: "{tmp}"; Flags: dontcopy solidbreak; Attribs: hidden system
+Source: ".\{tmp}\slides_picture_2.png";         DestDir: "{tmp}"; Flags: dontcopy solidbreak; Attribs: hidden system
+Source: ".\{tmp}\slides_picture_3.png";         DestDir: "{tmp}"; Flags: dontcopy solidbreak; Attribs: hidden system
+Source: ".\{tmp}\slides_picture_4.png";         DestDir: "{tmp}"; Flags: dontcopy solidbreak; Attribs: hidden system
+#endif
+;包含待打包项目的所有文件及文件夹
+Source: ".\{#MyAppBinDir}\*";                   DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+#ifndef PortableBuild
+#ifdef UseCustomUninstaller
+#if FileExists({#CustomUninstaller})
+Source: "{#CustomUninstaller}";                 DestDir: "{app}"; Flags: ignoreversion
+#endif
+#endif
+#endif
 
 #ifndef PortableBuild
 [Dirs]
@@ -233,11 +300,11 @@ Name: "{app}\Uninstaller"; Attribs: hidden system
 ;Name: "{group}\My Program"; Filename: "{app}\MYPROG.EXE"; Parameters: "/play filename.mid"; WorkingDir: "{app}"; Comment: "This is my program"; IconFilename: "{app}\myicon.ico"
 ;Name: "{group}\Documents"; Filename: "{app}\Doc"; Flags: foldershortcut
 
-#ifdef RegisteAssociations
-[UninstallRun]
+;#ifdef RegisteAssociations
+;[UninstallRun]
 ;卸载时运行反注册程序
-Filename: "{app}\{#MyAppExeName}"; Parameters: "--uninstall"; WorkingDir: "{app}"; Flags: waituntilterminated skipifdoesntexist
-#endif
+;Filename: "{app}\{#MyAppExeName}"; Parameters: "--uninstall"; WorkingDir: "{app}"; Flags: waituntilterminated skipifdoesntexist
+;#endif
 
 #ifndef PortableBuild
 [UninstallDelete]
@@ -261,18 +328,23 @@ const
   WIZARDFORM_WIDTH_NORMAL = 600;
   WIZARDFORM_HEIGHT_NORMAL = 400;
   WIZARDFORM_HEIGHT_MORE = 503;
+  SLIDES_PICTURE_WIDTH = WIZARDFORM_WIDTH_NORMAL;
+  SLIDES_PICTURE_HEIGHT = 332;
 
 var
-  label_wizardform_main, label_messagebox_main, label_wizardform_more_product_already_installed, label_messagebox_information, label_messagebox_title, label_wizardform_title, label_install_progress : TLabel;
+  label_wizardform_main, label_messagebox_main, label_wizardform_more_product_already_installed, label_messagebox_information, label_messagebox_title, label_wizardform_title, label_install_text, label_install_progress : TLabel;
   image_wizardform_background, image_messagebox_background, image_progressbar_background, image_progressbar_foreground, PBOldProc : longint;
   button_license, button_minimize, button_close, button_browse, button_setup_or_next, button_customize_setup, button_uncustomize_setup, checkbox_license, checkbox_setdefault, button_messagebox_close, button_messagebox_ok, button_messagebox_cancel : hwnd;
   is_wizardform_show_normal, is_installer_initialized, is_platform_windows_7, is_wizardform_released, can_exit_setup, need_to_change_associations : boolean;
   edit_target_path : TEdit;
   version_installed_before : string;
   messagebox_close : TSetupForm;
-  Taskbar_Timer, wizardform_animation_timer : longword;
-  boxFORM : TMainForm;
+  taskbar_update_timer, wizardform_animation_timer, slide_picture_timer : longword;
+  fake_main_form : TMainForm;
+  slide_1_b, slide_2_b, slide_3_b, slide_4_b, slide_1_t, slide_2_t, slide_3_t, slide_4_t : longint;
+  cur_pic_no, cur_pic_pos : integer;
 
+//botva2 API
 function ImgLoad(h : hwnd; FileName : PAnsiChar; Left, Top, Width, Height : integer; Stretch, IsBkg : boolean) : longint; external 'ImgLoad@files:botva2.dll stdcall delayload';
 procedure ImgSetVisibility(img : longint; Visible : boolean); external 'ImgSetVisibility@files:botva2.dll stdcall delayload';
 procedure ImgApplyChanges(h : hwnd); external 'ImgApplyChanges@files:botva2.dll stdcall delayload';
@@ -305,6 +377,87 @@ function Win7_SetTimer(hWnd, nIDEvent, uElapse, lpTimerFunc: longword): longword
 function Win7_KillTimer(hWnd, nIDEvent: longword): longword; external 'KillTimer@user32.dll stdcall';
 function SetClassLong(h : hwnd; nIndex : integer; dwNewLong : longint) : DWORD; external 'SetClassLongW@user32.dll stdcall';
 function GetClassLong(h : hwnd; nIndex : integer) : DWORD; external 'GetClassLongW@user32.dll stdcall';
+
+//安装时轮播图片
+procedure pictures_slides_animation(HandleW, Msg, idEvent, TimeSys: longword);
+begin
+  cur_pic_pos := cur_pic_pos + 10;
+  if (cur_pic_pos > SLIDES_PICTURE_WIDTH) then
+  begin
+    cur_pic_pos := 0;
+    cur_pic_no := cur_pic_no + 1;
+  end else
+  begin
+    if (cur_pic_no = 1) then
+    begin
+      ImgSetPosition(slide_1_t, cur_pic_pos - SLIDES_PICTURE_WIDTH, 0, SLIDES_PICTURE_WIDTH, SLIDES_PICTURE_HEIGHT);
+      ImgSetVisibility(slide_2_t, False);
+      ImgSetVisibility(slide_3_t, False);
+      ImgSetVisibility(slide_4_t, False);
+      ImgSetVisibility(slide_1_t, True); 
+    end;
+    if (cur_pic_no = 2) then
+    begin
+      ImgSetPosition(slide_2_t, cur_pic_pos - SLIDES_PICTURE_WIDTH, 0, SLIDES_PICTURE_WIDTH, SLIDES_PICTURE_HEIGHT);
+      ImgSetVisibility(slide_1_t, False);
+      ImgSetVisibility(slide_3_t, False);
+      ImgSetVisibility(slide_4_t, False);
+      ImgSetVisibility(slide_2_t, True); 
+      ImgSetVisibility(slide_1_b, True);
+      ImgSetVisibility(slide_3_b, False);
+      ImgSetVisibility(slide_4_b, False);
+      ImgSetVisibility(slide_2_b, False);
+    end;
+    if (cur_pic_no = 3) then
+    begin
+      ImgSetPosition(slide_3_t, cur_pic_pos - SLIDES_PICTURE_WIDTH, 0, SLIDES_PICTURE_WIDTH, SLIDES_PICTURE_HEIGHT);
+      ImgSetVisibility(slide_1_t, False);
+      ImgSetVisibility(slide_2_t, False); 
+      ImgSetVisibility(slide_4_t, False);
+      ImgSetVisibility(slide_3_t, True); 
+      ImgSetVisibility(slide_1_b, False);
+      ImgSetVisibility(slide_3_b, False);
+      ImgSetVisibility(slide_4_b, False);
+      ImgSetVisibility(slide_2_b, True);
+    end;
+    if (cur_pic_no = 4) then
+    begin
+      ImgSetPosition(slide_4_t, cur_pic_pos - SLIDES_PICTURE_WIDTH, 0, SLIDES_PICTURE_WIDTH, SLIDES_PICTURE_HEIGHT);
+      ImgSetVisibility(slide_1_t, False);
+      ImgSetVisibility(slide_2_t, False);
+      ImgSetVisibility(slide_3_t, False);
+      ImgSetVisibility(slide_4_t, True); 
+      ImgSetVisibility(slide_1_b, False);
+      ImgSetVisibility(slide_3_b, True);
+      ImgSetVisibility(slide_4_b, False);
+      ImgSetVisibility(slide_2_b, False);
+    end;
+    if (cur_pic_no > 4) then
+    begin
+      ImgSetPosition(slide_1_t, cur_pic_pos - SLIDES_PICTURE_WIDTH, 0, SLIDES_PICTURE_WIDTH, SLIDES_PICTURE_HEIGHT);
+      ImgSetVisibility(slide_2_t, False);
+      ImgSetVisibility(slide_3_t, False);
+      ImgSetVisibility(slide_4_t, False);
+      ImgSetVisibility(slide_1_t, True); 
+      ImgSetVisibility(slide_1_b, False);
+      ImgSetVisibility(slide_3_b, False);
+      ImgSetVisibility(slide_4_b, True);
+      ImgSetVisibility(slide_2_b, False); 
+      cur_pic_no := 1;
+    end;
+  end;
+  ImgApplyChanges(WizardForm.Handle);
+end;
+
+//停止轮播计时器
+procedure stop_slide_timer;
+begin
+  if (slide_picture_timer <> 0) then
+  begin
+    Win7_KillTimer(0, slide_picture_timer);
+    slide_picture_timer := 0;
+  end;
+end;
 
 //停止动画计时器
 procedure stop_animation_timer;
@@ -362,27 +515,27 @@ procedure update_img(HandleW, Msg, idEvent, TimeSys: longword);
 var
   FormDC, DC: longword;
 begin
-  boxFORM.ClientWidth := WizardForm.ClientWidth;
-  boxFORM.ClientHeight := WizardForm.ClientHeight;
-  DC := GetDC(boxFORM.Handle);
+  fake_main_form.ClientWidth := WizardForm.ClientWidth;
+  fake_main_form.ClientHeight := WizardForm.ClientHeight;
+  DC := GetDC(fake_main_form.Handle);
   FormDC := GetDC(WizardForm.Handle);
-  BitBlt(DC, 0, 0, boxFORM.ClientWidth, boxFORM.ClientHeight, FormDC, 0, 0, $00CC0020);
-  ReleaseDC(boxFORM.Handle, DC);
+  BitBlt(DC, 0, 0, fake_main_form.ClientWidth, fake_main_form.ClientHeight, FormDC, 0, 0, $00CC0020);
+  ReleaseDC(fake_main_form.Handle, DC);
   ReleaseDC(WizardForm.Handle, FormDC);
 end;
 
 //初始化任务栏缩略图
 procedure init_taskbar;
 begin
-  boxFORM := TMainForm.Create(nil);
+  fake_main_form := TMainForm.Create(nil);
   if isWin7 then
   begin
-    boxFORM.ClientWidth := WizardForm.ClientWidth;
-    boxFORM.ClientHeight := WizardForm.ClientHeight;
-    //boxFORM.Left := WizardForm.Left - 40;
-    boxFORM.top := WizardForm.top - 4000;
-    boxFORM.show;
-    Taskbar_Timer := Win7_SetTimer(0, 0, 500, WrapTimerProc(@Update_Img, 4));
+    fake_main_form.ClientWidth := WizardForm.ClientWidth;
+    fake_main_form.ClientHeight := WizardForm.ClientHeight;
+    //fake_main_form.Left := WizardForm.Left - 40;
+    fake_main_form.top := WizardForm.top - 4000;
+    fake_main_form.show;
+    taskbar_update_timer := Win7_SetTimer(0, 0, 500, WrapTimerProc(@Update_Img, 4));
   end;
 end;
 
@@ -391,10 +544,10 @@ procedure deinit_taskbar;
 begin
   if isWin7 then
   begin
-    if (Taskbar_Timer <> 0) then
+    if (taskbar_update_timer <> 0) then
     begin
-      Win7_KillTimer(0, Taskbar_Timer);
-      Taskbar_Timer := 0;
+      Win7_KillTimer(0, taskbar_update_timer);
+      taskbar_update_timer := 0;
     end;
   end;
 end;
@@ -727,7 +880,7 @@ begin
     ClientHeight := 20;
     Font.Size := 10;
     Font.Color := clWhite;
-    Caption := '{#MyAppName} 安装';
+    Caption := '{cm:messagebox_close_title}';
     Transparent := True;
     OnMouseDown := @messagebox_on_mouse_down;
   end;
@@ -742,7 +895,7 @@ begin
     Height := 20;
     Font.Size := 10;
     Font.Color := clBlack;
-    Caption := '您确定要退出“{#MyAppName}”安装程序？';
+    Caption := '{cm:messagebox_close_text}';
     Transparent := True;
     OnMouseDown := @messagebox_on_mouse_down;
   end;
@@ -803,6 +956,12 @@ begin
 #ifdef RegisteAssociations
   ExtractTemporaryFile('checkbox_setdefault.png');
 #endif
+#ifdef ShowSlidePictures
+  ExtractTemporaryFile('slides_picture_1.png');
+  ExtractTemporaryFile('slides_picture_2.png');
+  ExtractTemporaryFile('slides_picture_3.png');
+  ExtractTemporaryFile('slides_picture_4.png');
+#endif
   ExtractTemporaryFile('background_installing.png');
   ExtractTemporaryFile('background_finish.png');
   ExtractTemporaryFile('button_close.png');
@@ -837,7 +996,7 @@ begin
   begin
     if is_installing_older_version() then
     begin
-      MsgBox('您已安装更新版本的“{#MyAppName}”，不允许使用旧版本替换新版本，请单击“确定”按钮退出此安装程序。', mbInformation, MB_OK);
+      MsgBox('{cm:init_setup_outdated_version_warning}', mbInformation, MB_OK);
       Result := False;
     end else
     begin
@@ -889,7 +1048,7 @@ begin
     Height := 20;
     Font.Size := 9;
     Font.Color := clWhite;
-    Caption := '{#MyAppName} V{#MyAppVersion} 安装';
+    Caption := '{cm:wizardform_title}';
     Transparent := True;
     OnMouseDown := @wizardform_on_mouse_down;
   end;
@@ -904,7 +1063,7 @@ begin
     Height := 20;
     Font.Size := 9;
     Font.Color := clGray;
-    Caption := '软件已经安装，不允许更换目录。';
+    Caption := '{cm:no_change_destdir_warning}';
     Transparent := True;
     OnMouseDown := @wizardform_on_mouse_down;
   end;
@@ -952,9 +1111,9 @@ begin
   PBOldProc := SetWindowLong(WizardForm.ProgressGauge.Handle, -4, PBCallBack(@PBProc, 4));
   ImgApplyChanges(WizardForm.Handle);
   messagebox_close_create();
-  init_taskbar;
   SetClassLong(WizardForm.Handle, GCL_STYLE, GetClassLong(WizardForm.Handle, GCL_STYLE) or CS_DROPSHADOW);
   SetClassLong(messagebox_close.Handle, GCL_STYLE, GetClassLong(messagebox_close.Handle, GCL_STYLE) or CS_DROPSHADOW);
+  init_taskbar;
 end;
 
 //安装程序销毁时会调用这个函数
@@ -1022,6 +1181,21 @@ begin
 #endif
     BtnSetVisibility(button_license, False);
     BtnSetVisibility(checkbox_license, False);
+    label_install_text := TLabel.Create(WizardForm);
+    with label_install_text do
+    begin
+      Parent := WizardForm;
+      AutoSize := False;
+      Left := 20;
+      Top := 349;
+      Width := 60;
+      Height := 30;
+      Font.Size := 10;
+      Font.Color := clBlack;
+      Caption := '{cm:installing_label_text}';
+      Transparent := True;
+      OnMouseDown := @wizardform_on_mouse_down;
+    end;
     label_install_progress := TLabel.Create(WizardForm);
     with label_install_progress do
     begin
@@ -1042,10 +1216,37 @@ begin
     image_progressbar_background := ImgLoad(WizardForm.Handle, ExpandConstant('{tmp}\progressbar_background.png'), 20, 374, 560, 6, False, True);
     image_progressbar_foreground := ImgLoad(WizardForm.Handle, ExpandConstant('{tmp}\progressbar_foreground.png'), 20, 374, 0, 0, True, True);
     BtnSetVisibility(button_setup_or_next, False);
+#ifdef ShowSlidePictures
+    slide_1_b := ImgLoad(WizardForm.Handle, ExpandConstant('{tmp}\slides_picture_1.png'), 0, 0, SLIDES_PICTURE_WIDTH, SLIDES_PICTURE_HEIGHT, True, True);
+    slide_2_b := ImgLoad(WizardForm.Handle, ExpandConstant('{tmp}\slides_picture_2.png'), 0, 0, SLIDES_PICTURE_WIDTH, SLIDES_PICTURE_HEIGHT, True, True);
+    slide_3_b := ImgLoad(WizardForm.Handle, ExpandConstant('{tmp}\slides_picture_3.png'), 0, 0, SLIDES_PICTURE_WIDTH, SLIDES_PICTURE_HEIGHT, True, True);
+    slide_4_b := ImgLoad(WizardForm.Handle, ExpandConstant('{tmp}\slides_picture_4.png'), 0, 0, SLIDES_PICTURE_WIDTH, SLIDES_PICTURE_HEIGHT, True, True);
+    slide_1_t := ImgLoad(WizardForm.Handle, ExpandConstant('{tmp}\slides_picture_1.png'), 0, 0, SLIDES_PICTURE_WIDTH, SLIDES_PICTURE_HEIGHT, True, True);
+    slide_2_t := ImgLoad(WizardForm.Handle, ExpandConstant('{tmp}\slides_picture_2.png'), 0, 0, SLIDES_PICTURE_WIDTH, SLIDES_PICTURE_HEIGHT, True, True);
+    slide_3_t := ImgLoad(WizardForm.Handle, ExpandConstant('{tmp}\slides_picture_3.png'), 0, 0, SLIDES_PICTURE_WIDTH, SLIDES_PICTURE_HEIGHT, True, True);
+    slide_4_t := ImgLoad(WizardForm.Handle, ExpandConstant('{tmp}\slides_picture_4.png'), 0, 0, SLIDES_PICTURE_WIDTH, SLIDES_PICTURE_HEIGHT, True, True);
+    ImgSetVisibility(slide_1_t, False);
+    ImgSetVisibility(slide_2_t, False);
+    ImgSetVisibility(slide_3_t, False);
+    ImgSetVisibility(slide_4_t, False);  
+    ImgSetVisibility(slide_1_b, False);
+    ImgSetVisibility(slide_2_b, False);
+    ImgSetVisibility(slide_3_b, False);
+    ImgSetVisibility(slide_4_b, False);
+#endif
     ImgApplyChanges(WizardForm.Handle);
+#ifdef ShowSlidePictures
+    stop_slide_timer;
+	  slide_picture_timer := Win7_SetTimer(0, 0, 5, WrapTimerProc(@pictures_slides_animation, 4));
+#endif
   end;
   if (CurPageID = wpFinished) then
   begin
+#ifdef ShowSlidePictures
+    stop_slide_timer;
+#endif
+    label_install_text.Caption := '';
+    label_install_text.Visible := False;
     label_install_progress.Caption := '';
     label_install_progress.Visible := False;
     ImgSetVisibility(image_progressbar_background, False);
