@@ -48,9 +48,13 @@
 #endif
 
 #ifdef _WIN64
-#define EX_ARCH _T("x64")
+#define EX_ARCH_STR      _T("x64")
+#define EX_APP_ID_STR    EX_APP_ID_64_STR
+#define EX_APP_MUTEX_STR EX_APP_MUTEX_64_STR
 #else
-#define EX_ARCH _T("x86")
+#define EX_ARCH_STR      _T("x86")
+#define EX_APP_ID_STR    EX_APP_ID_32_STR
+#define EX_APP_MUTEX_STR EX_APP_MUTEX_32_STR
 #endif
 
 #endif

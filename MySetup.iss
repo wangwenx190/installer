@@ -330,6 +330,7 @@ const
   WIZARDFORM_HEIGHT_MORE = 503;
   SLIDES_PICTURE_WIDTH = WIZARDFORM_WIDTH_NORMAL;
   SLIDES_PICTURE_HEIGHT = 332;
+  SLIDES_PAUSE_SECONDS = 3;
 
 var
   label_wizardform_main, label_messagebox_main, label_wizardform_more_product_already_installed, label_messagebox_information, label_messagebox_title, label_wizardform_title, label_install_text, label_install_progress : TLabel;
@@ -339,10 +340,11 @@ var
   edit_target_path : TEdit;
   version_installed_before : string;
   messagebox_close : TSetupForm;
-  taskbar_update_timer, wizardform_animation_timer, slide_picture_timer : longword;
+  taskbar_update_timer, wizardform_animation_timer, slide_picture_timer, slide_pause_timer, slide_watcher_timer : longword;
   fake_main_form : TMainForm;
   slide_1_b, slide_2_b, slide_3_b, slide_4_b, slide_1_t, slide_2_t, slide_3_t, slide_4_t : longint;
   cur_pic_no, cur_pic_pos : integer;
+  time_counter : integer;
 
 //botva2 API
 function ImgLoad(h : hwnd; FileName : PAnsiChar; Left, Top, Width, Height : integer; Stretch, IsBkg : boolean) : longint; external 'ImgLoad@files:botva2.dll stdcall delayload';
@@ -373,10 +375,30 @@ function GetWindowLong(h : hwnd; Index : integer) : longint; external 'GetWindow
 function GetDC(hWnd: HWND): longword; external 'GetDC@user32.dll stdcall';
 function BitBlt(DestDC: longword; X, Y, Width, Height: integer; SrcDC: longword; XSrc, YSrc: integer; Rop: DWORD): BOOL; external 'BitBlt@gdi32.dll stdcall';
 function ReleaseDC(hWnd: HWND; hDC: longword): integer; external 'ReleaseDC@user32.dll stdcall';
-function Win7_SetTimer(hWnd, nIDEvent, uElapse, lpTimerFunc: longword): longword; external 'SetTimer@user32.dll stdcall';
-function Win7_KillTimer(hWnd, nIDEvent: longword): longword; external 'KillTimer@user32.dll stdcall';
+function SetTimer(hWnd, nIDEvent, uElapse, lpTimerFunc: longword): longword; external 'SetTimer@user32.dll stdcall';
+function KillTimer(hWnd, nIDEvent: longword): longword; external 'KillTimer@user32.dll stdcall';
 function SetClassLong(h : hwnd; nIndex : integer; dwNewLong : longint) : DWORD; external 'SetClassLongW@user32.dll stdcall';
 function GetClassLong(h : hwnd; nIndex : integer) : DWORD; external 'GetClassLongW@user32.dll stdcall';
+
+//停止轮播计时器
+procedure stop_slide_timer;
+begin
+  if (slide_picture_timer <> 0) then
+  begin
+    KillTimer(0, slide_picture_timer);
+    slide_picture_timer := 0;
+  end;
+end;
+
+//停止暂停轮播用的计时器
+procedure stop_slide_pause_timer;
+begin
+  if (slide_pause_timer <> 0) then
+  begin
+    KillTimer(0, slide_pause_timer);
+    slide_pause_timer := 0;
+  end;
+end;
 
 //安装时轮播图片
 procedure pictures_slides_animation(HandleW, Msg, idEvent, TimeSys: longword);
@@ -384,8 +406,8 @@ begin
   cur_pic_pos := cur_pic_pos + 10;
   if (cur_pic_pos > SLIDES_PICTURE_WIDTH) then
   begin
-    cur_pic_pos := 0;
     cur_pic_no := cur_pic_no + 1;
+    cur_pic_pos := 0;    
   end else
   begin
     if (cur_pic_no = 1) then
@@ -449,6 +471,34 @@ begin
   ImgApplyChanges(WizardForm.Handle);
 end;
 
+//暂停轮播
+procedure slide_pause_for_a_while(HandleW, Msg, idEvent, TimeSys: longword);
+begin
+  stop_slide_timer;
+  if (time_counter >= (SLIDES_PAUSE_SECONDS * 1000)) then
+  begin
+    stop_slide_pause_timer;
+    time_counter := 0;
+    cur_pic_pos := 1;
+    slide_picture_timer := SetTimer(0, 0, 20, WrapTimerProc(@pictures_slides_animation, 4));
+  end else
+  begin
+    time_counter := time_counter + 50;
+  end;
+end;
+
+//启动暂停轮播计时器
+procedure start_slide_pause_timer(HandleW, Msg, idEvent, TimeSys: longword);
+begin
+  if (cur_pic_pos <= 0) then
+  begin
+    if (slide_pause_timer = 0) then
+    begin
+      slide_pause_timer := SetTimer(0, 0, 10, WrapTimerProc(@slide_pause_for_a_while, 4));
+    end;    
+  end;  
+end;
+
 //轮播图片点击事件：打开特定网页
 procedure slide_picture_on_click(Sender : TObject);
 var
@@ -469,22 +519,12 @@ begin
   end;
 end;
 
-//停止轮播计时器
-procedure stop_slide_timer;
-begin
-  if (slide_picture_timer <> 0) then
-  begin
-    Win7_KillTimer(0, slide_picture_timer);
-    slide_picture_timer := 0;
-  end;
-end;
-
 //停止动画计时器
 procedure stop_animation_timer;
 begin
   if (wizardform_animation_timer <> 0) then
   begin
-    Win7_KillTimer(0, wizardform_animation_timer);
+    KillTimer(0, wizardform_animation_timer);
     wizardform_animation_timer := 0;
   end;
 end;
@@ -516,7 +556,7 @@ begin
 end;
 
 //判断系统版本，这个是决定是否要显示任务栏缩略图的依据
-function isWin7 : boolean;
+function is_win7_or_newer : boolean;
 var
   ver : TWindowsVersion;
 begin
@@ -548,25 +588,25 @@ end;
 procedure init_taskbar;
 begin
   fake_main_form := TMainForm.Create(nil);
-  if isWin7 then
+  if is_win7_or_newer then
   begin
     fake_main_form.ClientWidth := WizardForm.ClientWidth;
     fake_main_form.ClientHeight := WizardForm.ClientHeight;
     //fake_main_form.Left := WizardForm.Left - 40;
     fake_main_form.top := WizardForm.top - 4000;
     fake_main_form.show;
-    taskbar_update_timer := Win7_SetTimer(0, 0, 500, WrapTimerProc(@Update_Img, 4));
+    taskbar_update_timer := SetTimer(0, 0, 500, WrapTimerProc(@Update_Img, 4));
   end;
 end;
 
 //销毁任务栏缩略图定时器
 procedure deinit_taskbar;
 begin
-  if isWin7 then
+  if is_win7_or_newer then
   begin
     if (taskbar_update_timer <> 0) then
     begin
-      Win7_KillTimer(0, taskbar_update_timer);
+      KillTimer(0, taskbar_update_timer);
       taskbar_update_timer := 0;
     end;
   end;
@@ -732,14 +772,14 @@ begin
     stop_animation_timer;
     image_wizardform_background := ImgLoad(WizardForm.Handle, ExpandConstant('{tmp}\background_welcome_more.png'), 0, 0, WIZARDFORM_WIDTH_NORMAL, WIZARDFORM_HEIGHT_MORE, False, True);
     is_wizardform_show_normal := False;
-    wizardform_animation_timer := Win7_SetTimer(0, 0, 1, WrapTimerProc(@show_full_wizardform_animation, 4));
+    wizardform_animation_timer := SetTimer(0, 0, 1, WrapTimerProc(@show_full_wizardform_animation, 4));
     BtnSetVisibility(button_customize_setup, False);
     BtnSetVisibility(button_uncustomize_setup, True);
   end else
   begin
     stop_animation_timer;
     is_wizardform_show_normal := True;
-    wizardform_animation_timer := Win7_SetTimer(0, 0, 1, WrapTimerProc(@show_normal_wizardform_animation, 4));
+    wizardform_animation_timer := SetTimer(0, 0, 1, WrapTimerProc(@show_normal_wizardform_animation, 4));
     image_wizardform_background := ImgLoad(WizardForm.Handle, ExpandConstant('{tmp}\background_welcome.png'), 0, 0, WIZARDFORM_WIDTH_NORMAL, WIZARDFORM_HEIGHT_NORMAL, False, True);
     BtnSetVisibility(button_customize_setup, True);
     BtnSetVisibility(button_uncustomize_setup, False);
@@ -1191,7 +1231,7 @@ begin
   begin
     stop_animation_timer;
     is_wizardform_show_normal := True;
-    wizardform_animation_timer := Win7_SetTimer(0, 0, 1, WrapTimerProc(@show_normal_wizardform_animation, 4));
+    wizardform_animation_timer := SetTimer(0, 0, 1, WrapTimerProc(@show_normal_wizardform_animation, 4));
     edit_target_path.Hide();
     label_wizardform_more_product_already_installed.Hide();
     BtnSetVisibility(button_browse, False);
@@ -1261,13 +1301,28 @@ begin
     ImgApplyChanges(WizardForm.Handle);
 #ifdef ShowSlidePictures
     stop_slide_timer;
-	  slide_picture_timer := Win7_SetTimer(0, 0, 20, WrapTimerProc(@pictures_slides_animation, 4));
+    stop_slide_pause_timer;
+    time_counter := 0;
+    if (slide_watcher_timer <> 0) then
+    begin
+      KillTimer(0, slide_watcher_timer);
+      slide_watcher_timer := 0;
+    end;
+	  slide_picture_timer := SetTimer(0, 0, 20, WrapTimerProc(@pictures_slides_animation, 4));
+    slide_watcher_timer := SetTimer(0, 0, 10, WrapTimerProc(@start_slide_pause_timer, 4));
 #endif
   end;
   if (CurPageID = wpFinished) then
   begin
 #ifdef ShowSlidePictures
+    if (slide_watcher_timer <> 0) then
+    begin
+      KillTimer(0, slide_watcher_timer);
+      slide_watcher_timer := 0;
+    end;
     stop_slide_timer;
+    stop_slide_pause_timer;
+    time_counter := 0;    
 #endif
     label_install_text.Caption := '';
     label_install_text.Visible := False;
