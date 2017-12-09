@@ -276,11 +276,12 @@ begin
   fake_main_form := TMainForm.Create(nil);
   if is_win7_or_newer then
   begin
+    fake_main_form.BorderStyle := bsNone;
     fake_main_form.ClientWidth := WizardForm.ClientWidth;
     fake_main_form.ClientHeight := WizardForm.ClientHeight;
-    //fake_main_form.Left := WizardForm.Left - 40;
-    fake_main_form.top := WizardForm.top - 4000;
-    fake_main_form.show;
+    fake_main_form.Left := WizardForm.Left - 999999;
+    fake_main_form.Top := WizardForm.Top - 999999;
+    fake_main_form.Show;
     taskbar_update_timer := SetTimer(0, 0, 500, WrapTimerProc(@Update_Img, 4));
   end;
 end;
