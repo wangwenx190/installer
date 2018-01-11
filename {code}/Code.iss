@@ -26,7 +26,7 @@ var
   edit_target_path : TEdit;
   version_installed_before : string;
   messagebox_close : TSetupForm;
-  taskbar_update_timer, wizardform_animation_timer, slide_picture_timer, slide_pause_timer, slide_watcher_timer : longword;
+  taskbar_update_timer, wizardform_animation_timer, slide_picture_timer, slide_pause_timer : longword;
   fake_main_form : TMainForm;
   slide_1_b, slide_2_b, slide_3_b, slide_4_b, slide_1_t, slide_2_t, slide_3_t, slide_4_t : longint;
   cur_pic_no, cur_pic_pos : integer;
@@ -83,79 +83,11 @@ begin
   begin
     KillTimer(0, slide_pause_timer);
     slide_pause_timer := 0;
+    time_counter := 0;
   end;
 end;
 
-//安装时轮播图片
-procedure pictures_slides_animation(HandleW, Msg, idEvent, TimeSys: longword);
-begin
-  cur_pic_pos := cur_pic_pos + 10;
-  if (cur_pic_pos > SLIDES_PICTURE_WIDTH) then
-  begin
-    cur_pic_no := cur_pic_no + 1;
-    cur_pic_pos := 0;    
-  end else
-  begin
-    if (cur_pic_no = 1) then
-    begin
-      ImgSetPosition(slide_1_t, cur_pic_pos - SLIDES_PICTURE_WIDTH, 0, SLIDES_PICTURE_WIDTH, SLIDES_PICTURE_HEIGHT);
-      ImgSetVisibility(slide_2_t, False);
-      ImgSetVisibility(slide_3_t, False);
-      ImgSetVisibility(slide_4_t, False);
-      ImgSetVisibility(slide_1_t, True); 
-    end;
-    if (cur_pic_no = 2) then
-    begin
-      ImgSetPosition(slide_2_t, cur_pic_pos - SLIDES_PICTURE_WIDTH, 0, SLIDES_PICTURE_WIDTH, SLIDES_PICTURE_HEIGHT);
-      ImgSetVisibility(slide_1_t, False);
-      ImgSetVisibility(slide_3_t, False);
-      ImgSetVisibility(slide_4_t, False);
-      ImgSetVisibility(slide_2_t, True); 
-      ImgSetVisibility(slide_1_b, True);
-      ImgSetVisibility(slide_3_b, False);
-      ImgSetVisibility(slide_4_b, False);
-      ImgSetVisibility(slide_2_b, False);
-    end;
-    if (cur_pic_no = 3) then
-    begin
-      ImgSetPosition(slide_3_t, cur_pic_pos - SLIDES_PICTURE_WIDTH, 0, SLIDES_PICTURE_WIDTH, SLIDES_PICTURE_HEIGHT);
-      ImgSetVisibility(slide_1_t, False);
-      ImgSetVisibility(slide_2_t, False); 
-      ImgSetVisibility(slide_4_t, False);
-      ImgSetVisibility(slide_3_t, True); 
-      ImgSetVisibility(slide_1_b, False);
-      ImgSetVisibility(slide_3_b, False);
-      ImgSetVisibility(slide_4_b, False);
-      ImgSetVisibility(slide_2_b, True);
-    end;
-    if (cur_pic_no = 4) then
-    begin
-      ImgSetPosition(slide_4_t, cur_pic_pos - SLIDES_PICTURE_WIDTH, 0, SLIDES_PICTURE_WIDTH, SLIDES_PICTURE_HEIGHT);
-      ImgSetVisibility(slide_1_t, False);
-      ImgSetVisibility(slide_2_t, False);
-      ImgSetVisibility(slide_3_t, False);
-      ImgSetVisibility(slide_4_t, True); 
-      ImgSetVisibility(slide_1_b, False);
-      ImgSetVisibility(slide_3_b, True);
-      ImgSetVisibility(slide_4_b, False);
-      ImgSetVisibility(slide_2_b, False);
-    end;
-    if (cur_pic_no > 4) then
-    begin
-      ImgSetPosition(slide_1_t, cur_pic_pos - SLIDES_PICTURE_WIDTH, 0, SLIDES_PICTURE_WIDTH, SLIDES_PICTURE_HEIGHT);
-      ImgSetVisibility(slide_2_t, False);
-      ImgSetVisibility(slide_3_t, False);
-      ImgSetVisibility(slide_4_t, False);
-      ImgSetVisibility(slide_1_t, True); 
-      ImgSetVisibility(slide_1_b, False);
-      ImgSetVisibility(slide_3_b, False);
-      ImgSetVisibility(slide_4_b, True);
-      ImgSetVisibility(slide_2_b, False); 
-      cur_pic_no := 1;
-    end;
-  end;
-  ImgApplyChanges(WizardForm.Handle);
-end;
+procedure pictures_slides_animation(HandleW, Msg, idEvent, TimeSys: longword); forward;
 
 //暂停轮播
 procedure slide_pause_for_a_while(HandleW, Msg, idEvent, TimeSys: longword);
@@ -165,7 +97,6 @@ begin
   begin
     stop_slide_pause_timer;
     time_counter := 0;
-    cur_pic_pos := 1;
     slide_picture_timer := SetTimer(0, 0, 20, WrapTimerProc(@pictures_slides_animation, 4));
   end else
   begin
@@ -173,16 +104,88 @@ begin
   end;
 end;
 
-//启动暂停轮播计时器
-procedure start_slide_pause_timer(HandleW, Msg, idEvent, TimeSys: longword);
+procedure pause_slides_for_a_while();
 begin
   if (cur_pic_pos <= 0) then
   begin
+    stop_slide_timer;
     if (slide_pause_timer = 0) then
     begin
       slide_pause_timer := SetTimer(0, 0, 10, WrapTimerProc(@slide_pause_for_a_while, 4));
-    end;    
-  end;  
+    end;
+  end;
+end;
+
+//安装时轮播图片
+procedure pictures_slides_animation(HandleW, Msg, idEvent, TimeSys: longword);
+begin
+  cur_pic_pos := cur_pic_pos + 10;
+  if (ScaleX(cur_pic_pos) > ScaleX(SLIDES_PICTURE_WIDTH)) then
+  begin
+    cur_pic_no := cur_pic_no + 1;
+    cur_pic_pos := 0;
+    pause_slides_for_a_while;
+  end else
+  begin
+    if (cur_pic_no = 1) then
+    begin
+      ImgSetPosition(slide_1_t, ScaleX(cur_pic_pos - SLIDES_PICTURE_WIDTH), 0, ScaleX(SLIDES_PICTURE_WIDTH), ScaleY(SLIDES_PICTURE_HEIGHT));
+      ImgSetVisibility(slide_2_t, False);
+      ImgSetVisibility(slide_3_t, False);
+      ImgSetVisibility(slide_4_t, False);
+      ImgSetVisibility(slide_1_t, True);
+    end;
+    if (cur_pic_no = 2) then
+    begin
+      ImgSetPosition(slide_2_t, ScaleX(cur_pic_pos - SLIDES_PICTURE_WIDTH), 0, ScaleX(SLIDES_PICTURE_WIDTH), ScaleY(SLIDES_PICTURE_HEIGHT));
+      ImgSetVisibility(slide_1_t, False);
+      ImgSetVisibility(slide_3_t, False);
+      ImgSetVisibility(slide_4_t, False);
+      ImgSetVisibility(slide_2_t, True);
+      ImgSetVisibility(slide_1_b, True);
+      ImgSetVisibility(slide_3_b, False);
+      ImgSetVisibility(slide_4_b, False);
+      ImgSetVisibility(slide_2_b, False);
+    end;
+    if (cur_pic_no = 3) then
+    begin
+      ImgSetPosition(slide_3_t, ScaleX(cur_pic_pos - SLIDES_PICTURE_WIDTH), 0, ScaleX(SLIDES_PICTURE_WIDTH), ScaleY(SLIDES_PICTURE_HEIGHT));
+      ImgSetVisibility(slide_1_t, False);
+      ImgSetVisibility(slide_2_t, False);
+      ImgSetVisibility(slide_4_t, False);
+      ImgSetVisibility(slide_3_t, True);
+      ImgSetVisibility(slide_1_b, False);
+      ImgSetVisibility(slide_3_b, False);
+      ImgSetVisibility(slide_4_b, False);
+      ImgSetVisibility(slide_2_b, True);
+    end;
+    if (cur_pic_no = 4) then
+    begin
+      ImgSetPosition(slide_4_t, ScaleX(cur_pic_pos - SLIDES_PICTURE_WIDTH), 0, ScaleX(SLIDES_PICTURE_WIDTH), ScaleY(SLIDES_PICTURE_HEIGHT));
+      ImgSetVisibility(slide_1_t, False);
+      ImgSetVisibility(slide_2_t, False);
+      ImgSetVisibility(slide_3_t, False);
+      ImgSetVisibility(slide_4_t, True);
+      ImgSetVisibility(slide_1_b, False);
+      ImgSetVisibility(slide_3_b, True);
+      ImgSetVisibility(slide_4_b, False);
+      ImgSetVisibility(slide_2_b, False);
+    end;
+    if (cur_pic_no > 4) then
+    begin
+      ImgSetPosition(slide_1_t, ScaleX(cur_pic_pos - SLIDES_PICTURE_WIDTH), 0, ScaleX(SLIDES_PICTURE_WIDTH), ScaleY(SLIDES_PICTURE_HEIGHT));
+      ImgSetVisibility(slide_2_t, False);
+      ImgSetVisibility(slide_3_t, False);
+      ImgSetVisibility(slide_4_t, False);
+      ImgSetVisibility(slide_1_t, True);
+      ImgSetVisibility(slide_1_b, False);
+      ImgSetVisibility(slide_3_b, False);
+      ImgSetVisibility(slide_4_b, True);
+      ImgSetVisibility(slide_2_b, False);
+      cur_pic_no := 1;
+    end;
+  end;
+  ImgApplyChanges(WizardForm.Handle);
 end;
 
 //轮播图片点击事件：打开特定网页
@@ -218,26 +221,26 @@ end;
 //窗口变大动画
 procedure show_full_wizardform_animation(HandleW, Msg, idEvent, TimeSys: longword);
 begin
-  if (WizardForm.ClientHeight < WIZARDFORM_HEIGHT_MORE) then
+  if (WizardForm.ClientHeight < ScaleY(WIZARDFORM_HEIGHT_MORE)) then
   begin
-    WizardForm.ClientHeight := WizardForm.ClientHeight + 10;
+    WizardForm.ClientHeight := WizardForm.ClientHeight + ScaleY(10);
   end else
   begin
     stop_animation_timer;
-    WizardForm.ClientHeight := WIZARDFORM_HEIGHT_MORE;
+    WizardForm.ClientHeight := ScaleY(WIZARDFORM_HEIGHT_MORE);
   end;
 end;
 
 //窗口变小动画
 procedure show_normal_wizardform_animation(HandleW, Msg, idEvent, TimeSys: longword);
 begin
-  if (WizardForm.ClientHeight > WIZARDFORM_HEIGHT_NORMAL) then
+  if (WizardForm.ClientHeight > ScaleY(WIZARDFORM_HEIGHT_NORMAL)) then
   begin
-    WizardForm.ClientHeight := WizardForm.ClientHeight - 10;
+    WizardForm.ClientHeight := WizardForm.ClientHeight - ScaleY(10);
   end else
   begin
     stop_animation_timer;
-    WizardForm.ClientHeight := WIZARDFORM_HEIGHT_NORMAL;
+    WizardForm.ClientHeight := ScaleY(WIZARDFORM_HEIGHT_NORMAL);
   end;
 end;
 
@@ -279,8 +282,8 @@ begin
     fake_main_form.BorderStyle := bsNone;
     fake_main_form.ClientWidth := WizardForm.ClientWidth;
     fake_main_form.ClientHeight := WizardForm.ClientHeight;
-    fake_main_form.Left := WizardForm.Left - 999999;
-    fake_main_form.Top := WizardForm.Top - 999999;
+    fake_main_form.Left := WizardForm.Left - ScaleX(999999);
+    fake_main_form.Top := WizardForm.Top - ScaleY(999999);
     fake_main_form.Show;
     taskbar_update_timer := SetTimer(0, 0, 500, WrapTimerProc(@Update_Img, 4));
   end;
@@ -457,7 +460,7 @@ begin
   if is_wizardform_show_normal then
   begin
     stop_animation_timer;
-    image_wizardform_background := ImgLoad(WizardForm.Handle, ExpandConstant('{tmp}\background_welcome_more.png'), 0, 0, WIZARDFORM_WIDTH_NORMAL, WIZARDFORM_HEIGHT_MORE, False, True);
+    image_wizardform_background := ImgLoad(WizardForm.Handle, ExpandConstant('{tmp}\background_welcome_more.png'), 0, 0, ScaleX(WIZARDFORM_WIDTH_NORMAL), ScaleY(WIZARDFORM_HEIGHT_MORE), False, True);
     is_wizardform_show_normal := False;
     wizardform_animation_timer := SetTimer(0, 0, 1, WrapTimerProc(@show_full_wizardform_animation, 4));
     BtnSetVisibility(button_customize_setup, False);
@@ -467,7 +470,7 @@ begin
     stop_animation_timer;
     is_wizardform_show_normal := True;
     wizardform_animation_timer := SetTimer(0, 0, 1, WrapTimerProc(@show_normal_wizardform_animation, 4));
-    image_wizardform_background := ImgLoad(WizardForm.Handle, ExpandConstant('{tmp}\background_welcome.png'), 0, 0, WIZARDFORM_WIDTH_NORMAL, WIZARDFORM_HEIGHT_NORMAL, False, True);
+    image_wizardform_background := ImgLoad(WizardForm.Handle, ExpandConstant('{tmp}\background_welcome.png'), 0, 0, ScaleX(WIZARDFORM_WIDTH_NORMAL), ScaleY(WIZARDFORM_HEIGHT_NORMAL), False, True);
     BtnSetVisibility(button_customize_setup, True);
     BtnSetVisibility(button_uncustomize_setup, False);
   end;
@@ -504,7 +507,7 @@ procedure checkbox_setdefault_on_click(hBtn : hwnd);
 begin
   if BtnGetChecked(checkbox_setdefault) then
   begin
-    need_to_change_associations := True;  
+    need_to_change_associations := True;
   end else
   begin
     need_to_change_associations := False;
@@ -546,9 +549,9 @@ begin
     i2 := WizardForm.ProgressGauge.Max - WizardForm.ProgressGauge.Min;
     pr := (i1 * 100) / i2;
     label_install_progress.Caption := Format('%d', [Round(pr)]) + '%';
-    w := Round((560 * pr) / 100);
-    ImgSetPosition(image_progressbar_foreground, 20, 374, w, 6);
-    ImgSetVisiblePart(image_progressbar_foreground, 0, 0, w, 6);
+    w := Round((ScaleX(560) * pr) / 100);
+    ImgSetPosition(image_progressbar_foreground, ScaleX(20), ScaleY(374), w, ScaleY(6));
+    ImgSetVisiblePart(image_progressbar_foreground, 0, 0, w, ScaleY(6));
     ImgApplyChanges(WizardForm.Handle);
   end;
 end;
@@ -611,8 +614,8 @@ begin
   with messagebox_close do
   begin
     BorderStyle := bsNone;
-    ClientWidth := 380;
-    ClientHeight := 190;
+    ClientWidth := ScaleX(380);
+    ClientHeight := ScaleY(190);
     Color := clWhite;
     Caption := '';
   end;
@@ -621,10 +624,10 @@ begin
   begin
     Parent := messagebox_close;
     AutoSize := False;
-    Left := 30;
-    Top := 5;
-    ClientWidth := 400;
-    ClientHeight := 20;
+    Left := ScaleX(30);
+    Top := ScaleY(5);
+    ClientWidth := ScaleX(400);
+    ClientHeight := ScaleY(20);
     Font.Size := 10;
     Font.Color := clWhite;
     Caption := '{cm:messagebox_close_title}';
@@ -636,10 +639,10 @@ begin
   begin
     Parent := messagebox_close;
     AutoSize := False;
-    Left := 70;
-    Top := 64;
-    Width := 400;
-    Height := 20;
+    Left := ScaleX(70);
+    Top := ScaleY(64);
+    ClientWidth := ScaleX(400);
+    ClientHeight := ScaleY(20);
     Font.Size := 10;
     Font.Color := clBlack;
     Caption := '{cm:messagebox_close_text}';
@@ -653,18 +656,18 @@ begin
     AutoSize := False;
     Left := 0;
     Top := 0;
-    Width := messagebox_close.Width;
-    Height := messagebox_close.Height;
+    ClientWidth := messagebox_close.ClientWidth;
+    ClientHeight := messagebox_close.ClientHeight;
     Caption := '';
     Transparent := True;
     OnMouseDown := @messagebox_on_mouse_down;
   end;
-  image_messagebox_background := ImgLoad(messagebox_close.Handle, ExpandConstant('{tmp}\background_messagebox.png'), 0, 0, 380, 190, False, True);
-  button_messagebox_close := BtnCreate(messagebox_close.Handle, 350, 0, 30, 30, ExpandConstant('{tmp}\button_close.png'), 0, False);
+  image_messagebox_background := ImgLoad(messagebox_close.Handle, ExpandConstant('{tmp}\background_messagebox.png'), 0, 0, ScaleX(380), ScaleY(190), False, True);
+  button_messagebox_close := BtnCreate(messagebox_close.Handle, ScaleX(350), 0, ScaleX(30), ScaleY(30), ExpandConstant('{tmp}\button_close.png'), 0, False);
   BtnSetEvent(button_messagebox_close, ID_BUTTON_ON_CLICK_EVENT, WrapBtnCallback(@button_messagebox_cancel_on_click, 1));
-  button_messagebox_ok := BtnCreate(messagebox_close.Handle, 206, 150, 76, 28, ExpandConstant('{tmp}\button_ok.png'), 0, False);
+  button_messagebox_ok := BtnCreate(messagebox_close.Handle, ScaleX(206), ScaleY(150), ScaleX(76), ScaleY(28), ExpandConstant('{tmp}\button_ok.png'), 0, False);
   BtnSetEvent(button_messagebox_ok, ID_BUTTON_ON_CLICK_EVENT, WrapBtnCallback(@button_messagebox_ok_on_click, 1));
-  button_messagebox_cancel := BtnCreate(messagebox_close.Handle, 293, 150, 76, 28, ExpandConstant('{tmp}\button_cancel.png'), 0, False);
+  button_messagebox_cancel := BtnCreate(messagebox_close.Handle, ScaleX(293), ScaleY(150), ScaleX(76), ScaleY(28), ExpandConstant('{tmp}\button_cancel.png'), 0, False);
   BtnSetEvent(button_messagebox_cancel, ID_BUTTON_ON_CLICK_EVENT, WrapBtnCallback(@button_messagebox_cancel_on_click, 1));
   ImgApplyChanges(messagebox_close.Handle);
 end;
@@ -778,11 +781,11 @@ begin
   begin
     BorderStyle := bsNone;
     Position := poDesktopCenter;
-    ClientWidth := WIZARDFORM_WIDTH_NORMAL;
-    ClientHeight := WIZARDFORM_HEIGHT_MORE;
+    ClientWidth := ScaleX(WIZARDFORM_WIDTH_NORMAL);
+    ClientHeight := ScaleY(WIZARDFORM_HEIGHT_MORE);
     Color := clWhite;
-    NextButton.Height := 0;
-    CancelButton.Height := 0;
+    NextButton.ClientHeight := 0;
+    CancelButton.ClientHeight := 0;
     BackButton.Visible := False;
   end;
   label_wizardform_title := TLabel.Create(WizardForm);
@@ -790,10 +793,10 @@ begin
   begin
     Parent := WizardForm;
     AutoSize := False;
-    Left := 10;
-    Top := 5;
-    Width := 200;
-    Height := 20;
+    Left := ScaleX(10);
+    Top := ScaleY(5);
+    ClientWidth := ScaleX(200);
+    ClientHeight := ScaleY(20);
     Font.Size := 9;
     Font.Color := clWhite;
     Caption := '{cm:wizardform_title}';
@@ -805,10 +808,10 @@ begin
   begin
     Parent := WizardForm;
     AutoSize := False;
-    Left := 85;
-    Top := 449;
-    Width := 200;
-    Height := 20;
+    Left := ScaleX(85);
+    Top := ScaleY(449);
+    ClientWidth := ScaleX(200);
+    ClientHeight := ScaleY(20);
     Font.Size := 9;
     Font.Color := clGray;
     Caption := '{cm:no_change_destdir_warning}';
@@ -823,8 +826,8 @@ begin
     AutoSize := False;
     Left := 0;
     Top := 0;
-    Width := WizardForm.Width;
-    Height := WizardForm.Height;
+    ClientWidth := WizardForm.ClientWidth;
+    ClientHeight := WizardForm.ClientHeight;
     Caption := '';
     Transparent := True;
     OnMouseDown := @wizardform_on_mouse_down;
@@ -836,24 +839,24 @@ begin
     Text := WizardForm.DirEdit.Text;
     Font.Size := 9;
     BorderStyle := bsNone;
-    SetBounds(91,423,402,20);
+    SetBounds(ScaleX(91), ScaleY(423), ScaleX(402), ScaleY(20));
     OnChange := @edit_target_path_on_change;
     Color := clWhite;
     TabStop := False;
   end;
   edit_target_path.Hide();
-  button_close := BtnCreate(WizardForm.Handle, 570, 0, 30, 30, ExpandConstant('{tmp}\button_close.png'), 0, False);
+  button_close := BtnCreate(WizardForm.Handle, ScaleX(570), 0, ScaleX(30), ScaleY(30), ExpandConstant('{tmp}\button_close.png'), 0, False);
   BtnSetEvent(button_close, ID_BUTTON_ON_CLICK_EVENT, WrapBtnCallback(@button_close_on_click, 1));
-  button_minimize := BtnCreate(WizardForm.Handle, 540, 0, 30, 30, ExpandConstant('{tmp}\button_minimize.png'), 0, False);
+  button_minimize := BtnCreate(WizardForm.Handle, ScaleX(540), 0, ScaleX(30), ScaleY(30), ExpandConstant('{tmp}\button_minimize.png'), 0, False);
   BtnSetEvent(button_minimize, ID_BUTTON_ON_CLICK_EVENT, WrapBtnCallback(@button_minimize_on_click, 1));
-  button_setup_or_next := BtnCreate(WizardForm.Handle, 211, 305, 178, 43, ExpandConstant('{tmp}\button_setup_or_next.png'), 0, False);
+  button_setup_or_next := BtnCreate(WizardForm.Handle, ScaleX(211), ScaleY(305), ScaleX(178), ScaleY(43), ExpandConstant('{tmp}\button_setup_or_next.png'), 0, False);
   BtnSetEvent(button_setup_or_next, ID_BUTTON_ON_CLICK_EVENT, WrapBtnCallback(@button_setup_or_next_on_click, 1));
-  button_browse := BtnCreate(WizardForm.Handle, 506, 420, 75, 24, ExpandConstant('{tmp}\button_browse.png'), 0, False);
+  button_browse := BtnCreate(WizardForm.Handle, ScaleX(506), ScaleY(420), ScaleX(75), ScaleY(24), ExpandConstant('{tmp}\button_browse.png'), 0, False);
   BtnSetEvent(button_browse, ID_BUTTON_ON_CLICK_EVENT, WrapBtnCallback(@button_browse_on_click, 1));
   BtnSetVisibility(button_browse, False);
-  button_customize_setup := BtnCreate(WizardForm.Handle, 511, 374, 78, 14, ExpandConstant('{tmp}\button_customize_setup.png'), 0, False);
+  button_customize_setup := BtnCreate(WizardForm.Handle, ScaleX(511), ScaleY(374), ScaleX(78), ScaleY(14), ExpandConstant('{tmp}\button_customize_setup.png'), 0, False);
   BtnSetEvent(button_customize_setup, ID_BUTTON_ON_CLICK_EVENT, WrapBtnCallback(@button_customize_setup_on_click, 1));
-  button_uncustomize_setup := BtnCreate(WizardForm.Handle, 511, 374, 78, 14, ExpandConstant('{tmp}\button_uncustomize_setup.png'), 0, False);
+  button_uncustomize_setup := BtnCreate(WizardForm.Handle, ScaleX(511), ScaleY(374), ScaleX(78), ScaleY(14), ExpandConstant('{tmp}\button_uncustomize_setup.png'), 0, False);
   BtnSetEvent(button_uncustomize_setup, ID_BUTTON_ON_CLICK_EVENT, WrapBtnCallback(@button_customize_setup_on_click, 1));
   BtnSetVisibility(button_uncustomize_setup, False);
   PBOldProc := SetWindowLong(WizardForm.ProgressGauge.Handle, -4, PBCallBack(@PBProc, 4));
@@ -887,14 +890,14 @@ procedure CurPageChanged(CurPageID : integer);
 begin
   if (CurPageID = wpWelcome) then
   begin
-    image_wizardform_background := ImgLoad(WizardForm.Handle, ExpandConstant('{tmp}\background_welcome.png'), 0, 0, WIZARDFORM_WIDTH_NORMAL, WIZARDFORM_HEIGHT_NORMAL, False, True);
-    button_license := BtnCreate(WizardForm.Handle, 110, 376, 96, 12, ExpandConstant('{tmp}\button_license.png'), 0, False);
+    image_wizardform_background := ImgLoad(WizardForm.Handle, ExpandConstant('{tmp}\background_welcome.png'), 0, 0, ScaleX(WIZARDFORM_WIDTH_NORMAL), ScaleY(WIZARDFORM_HEIGHT_NORMAL), False, True);
+    button_license := BtnCreate(WizardForm.Handle, ScaleX(110), ScaleY(376), ScaleX(96), ScaleY(12), ExpandConstant('{tmp}\button_license.png'), 0, False);
     BtnSetEvent(button_license, ID_BUTTON_ON_CLICK_EVENT, WrapBtnCallback(@button_license_on_click, 1));
-    checkbox_license := BtnCreate(WizardForm.Handle, 11, 374, 93, 17, ExpandConstant('{tmp}\checkbox_license.png'), 0, True);
+    checkbox_license := BtnCreate(WizardForm.Handle, ScaleX(11), ScaleY(374), ScaleX(93), ScaleY(17), ExpandConstant('{tmp}\checkbox_license.png'), 0, True);
     BtnSetEvent(checkbox_license, ID_BUTTON_ON_CLICK_EVENT, WrapBtnCallback(@checkbox_license_on_click, 1));
     BtnSetChecked(checkbox_license, True);
 #ifdef RegisteAssociations
-    checkbox_setdefault := BtnCreate(WizardForm.Handle, 85, 470, 92, 17, ExpandConstant('{tmp}\checkbox_setdefault.png'), 0, True);
+    checkbox_setdefault := BtnCreate(WizardForm.Handle, ScaleX(85), ScaleY(470), ScaleX(92), ScaleY(17), ExpandConstant('{tmp}\checkbox_setdefault.png'), 0, True);
     BtnSetEvent(checkbox_setdefault, ID_BUTTON_ON_CLICK_EVENT, WrapBtnCallback(@checkbox_setdefault_on_click, 1));
     BtnSetChecked(checkbox_setdefault, True);
     BtnSetVisibility(checkbox_setdefault, True);
@@ -911,7 +914,7 @@ begin
       label_wizardform_more_product_already_installed.Show();
     end;
 #endif
-    WizardForm.ClientHeight := WIZARDFORM_HEIGHT_NORMAL;
+    WizardForm.ClientHeight := ScaleY(WIZARDFORM_HEIGHT_NORMAL);
     ImgApplyChanges(WizardForm.Handle);
   end;
   if (CurPageID = wpInstalling) then
@@ -926,7 +929,7 @@ begin
     BtnSetVisibility(button_customize_setup, False);
     BtnSetVisibility(button_uncustomize_setup, False);
     BtnSetVisibility(button_close, False);
-    BtnSetPosition(button_minimize, 570, 0, 30, 30);
+    BtnSetPosition(button_minimize, ScaleX(570), 0, ScaleX(30), ScaleY(30));
 #ifdef RegisteAssociations
     BtnSetVisibility(checkbox_setdefault, False);
 #endif
@@ -937,10 +940,10 @@ begin
     begin
       Parent := WizardForm;
       AutoSize := False;
-      Left := 20;
-      Top := 349;
-      Width := 60;
-      Height := 30;
+      Left := ScaleX(20);
+      Top := ScaleY(349);
+      ClientWidth := ScaleX(60);
+      ClientHeight := ScaleY(30);
       Font.Size := 10;
       Font.Color := clBlack;
       Caption := '{cm:installing_label_text}';
@@ -952,10 +955,10 @@ begin
     begin
       Parent := WizardForm;
       AutoSize := False;
-      Left := 547;
-      Top := 349;
-      Width := 30;
-      Height := 30;
+      Left := ScaleX(547);
+      Top := ScaleY(349);
+      ClientWidth := ScaleX(30);
+      ClientHeight := ScaleY(30);
       Font.Size := 10;
       Font.Color := clBlack;
       Caption := '';
@@ -963,23 +966,23 @@ begin
       Alignment := taRightJustify;
       OnMouseDown := @wizardform_on_mouse_down;
     end;
-    image_wizardform_background := ImgLoad(WizardForm.Handle, ExpandConstant('{tmp}\background_installing.png'), 0, 0, WIZARDFORM_WIDTH_NORMAL, WIZARDFORM_HEIGHT_NORMAL, False, True);
-    image_progressbar_background := ImgLoad(WizardForm.Handle, ExpandConstant('{tmp}\progressbar_background.png'), 20, 374, 560, 6, False, True);
-    image_progressbar_foreground := ImgLoad(WizardForm.Handle, ExpandConstant('{tmp}\progressbar_foreground.png'), 20, 374, 0, 0, True, True);
+    image_wizardform_background := ImgLoad(WizardForm.Handle, ExpandConstant('{tmp}\background_installing.png'), 0, 0, ScaleX(WIZARDFORM_WIDTH_NORMAL), ScaleY(WIZARDFORM_HEIGHT_NORMAL), False, True);
+    image_progressbar_background := ImgLoad(WizardForm.Handle, ExpandConstant('{tmp}\progressbar_background.png'), ScaleX(20), ScaleY(374), ScaleX(560), ScaleY(6), False, True);
+    image_progressbar_foreground := ImgLoad(WizardForm.Handle, ExpandConstant('{tmp}\progressbar_foreground.png'), ScaleX(20), ScaleY(374), 0, 0, True, True);
     BtnSetVisibility(button_setup_or_next, False);
 #ifdef ShowSlidePictures
-    slide_1_b := ImgLoad(WizardForm.Handle, ExpandConstant('{tmp}\slides_picture_1.png'), 0, 0, SLIDES_PICTURE_WIDTH, SLIDES_PICTURE_HEIGHT, True, True);
-    slide_2_b := ImgLoad(WizardForm.Handle, ExpandConstant('{tmp}\slides_picture_2.png'), 0, 0, SLIDES_PICTURE_WIDTH, SLIDES_PICTURE_HEIGHT, True, True);
-    slide_3_b := ImgLoad(WizardForm.Handle, ExpandConstant('{tmp}\slides_picture_3.png'), 0, 0, SLIDES_PICTURE_WIDTH, SLIDES_PICTURE_HEIGHT, True, True);
-    slide_4_b := ImgLoad(WizardForm.Handle, ExpandConstant('{tmp}\slides_picture_4.png'), 0, 0, SLIDES_PICTURE_WIDTH, SLIDES_PICTURE_HEIGHT, True, True);
-    slide_1_t := ImgLoad(WizardForm.Handle, ExpandConstant('{tmp}\slides_picture_1.png'), 0, 0, SLIDES_PICTURE_WIDTH, SLIDES_PICTURE_HEIGHT, True, True);
-    slide_2_t := ImgLoad(WizardForm.Handle, ExpandConstant('{tmp}\slides_picture_2.png'), 0, 0, SLIDES_PICTURE_WIDTH, SLIDES_PICTURE_HEIGHT, True, True);
-    slide_3_t := ImgLoad(WizardForm.Handle, ExpandConstant('{tmp}\slides_picture_3.png'), 0, 0, SLIDES_PICTURE_WIDTH, SLIDES_PICTURE_HEIGHT, True, True);
-    slide_4_t := ImgLoad(WizardForm.Handle, ExpandConstant('{tmp}\slides_picture_4.png'), 0, 0, SLIDES_PICTURE_WIDTH, SLIDES_PICTURE_HEIGHT, True, True);
+    slide_1_b := ImgLoad(WizardForm.Handle, ExpandConstant('{tmp}\slides_picture_1.png'), 0, 0, ScaleX(SLIDES_PICTURE_WIDTH), ScaleY(SLIDES_PICTURE_HEIGHT), True, True);
+    slide_2_b := ImgLoad(WizardForm.Handle, ExpandConstant('{tmp}\slides_picture_2.png'), 0, 0, ScaleX(SLIDES_PICTURE_WIDTH), ScaleY(SLIDES_PICTURE_HEIGHT), True, True);
+    slide_3_b := ImgLoad(WizardForm.Handle, ExpandConstant('{tmp}\slides_picture_3.png'), 0, 0, ScaleX(SLIDES_PICTURE_WIDTH), ScaleY(SLIDES_PICTURE_HEIGHT), True, True);
+    slide_4_b := ImgLoad(WizardForm.Handle, ExpandConstant('{tmp}\slides_picture_4.png'), 0, 0, ScaleX(SLIDES_PICTURE_WIDTH), ScaleY(SLIDES_PICTURE_HEIGHT), True, True);
+    slide_1_t := ImgLoad(WizardForm.Handle, ExpandConstant('{tmp}\slides_picture_1.png'), 0, 0, ScaleX(SLIDES_PICTURE_WIDTH), ScaleY(SLIDES_PICTURE_HEIGHT), True, True);
+    slide_2_t := ImgLoad(WizardForm.Handle, ExpandConstant('{tmp}\slides_picture_2.png'), 0, 0, ScaleX(SLIDES_PICTURE_WIDTH), ScaleY(SLIDES_PICTURE_HEIGHT), True, True);
+    slide_3_t := ImgLoad(WizardForm.Handle, ExpandConstant('{tmp}\slides_picture_3.png'), 0, 0, ScaleX(SLIDES_PICTURE_WIDTH), ScaleY(SLIDES_PICTURE_HEIGHT), True, True);
+    slide_4_t := ImgLoad(WizardForm.Handle, ExpandConstant('{tmp}\slides_picture_4.png'), 0, 0, ScaleX(SLIDES_PICTURE_WIDTH), ScaleY(SLIDES_PICTURE_HEIGHT), True, True);
     ImgSetVisibility(slide_1_t, False);
     ImgSetVisibility(slide_2_t, False);
     ImgSetVisibility(slide_3_t, False);
-    ImgSetVisibility(slide_4_t, False);  
+    ImgSetVisibility(slide_4_t, False);
     ImgSetVisibility(slide_1_b, False);
     ImgSetVisibility(slide_2_b, False);
     ImgSetVisibility(slide_3_b, False);
@@ -990,26 +993,15 @@ begin
     stop_slide_timer;
     stop_slide_pause_timer;
     time_counter := 0;
-    if (slide_watcher_timer <> 0) then
-    begin
-      KillTimer(0, slide_watcher_timer);
-      slide_watcher_timer := 0;
-    end;
 	  slide_picture_timer := SetTimer(0, 0, 20, WrapTimerProc(@pictures_slides_animation, 4));
-    slide_watcher_timer := SetTimer(0, 0, 10, WrapTimerProc(@start_slide_pause_timer, 4));
 #endif
   end;
   if (CurPageID = wpFinished) then
   begin
 #ifdef ShowSlidePictures
-    if (slide_watcher_timer <> 0) then
-    begin
-      KillTimer(0, slide_watcher_timer);
-      slide_watcher_timer := 0;
-    end;
     stop_slide_timer;
     stop_slide_pause_timer;
-    time_counter := 0;    
+    time_counter := 0;
 #endif
     label_install_text.Caption := '';
     label_install_text.Visible := False;
@@ -1017,12 +1009,12 @@ begin
     label_install_progress.Visible := False;
     ImgSetVisibility(image_progressbar_background, False);
     ImgSetVisibility(image_progressbar_foreground, False);
-    BtnSetPosition(button_minimize, 540, 0, 30, 30);
+    BtnSetPosition(button_minimize, ScaleX(540), 0, ScaleX(30), ScaleY(30));
     BtnSetVisibility(button_close, True);
-    button_setup_or_next := BtnCreate(WizardForm.Handle, 214, 305, 180, 44, ExpandConstant('{tmp}\button_finish.png'), 0, False);
+    button_setup_or_next := BtnCreate(WizardForm.Handle, ScaleX(214), ScaleY(305), ScaleX(180), ScaleY(44), ExpandConstant('{tmp}\button_finish.png'), 0, False);
     BtnSetEvent(button_setup_or_next, ID_BUTTON_ON_CLICK_EVENT, WrapBtnCallback(@button_setup_or_next_on_click, 1));
     BtnSetEvent(button_close, ID_BUTTON_ON_CLICK_EVENT, WrapBtnCallback(@button_setup_or_next_on_click, 1));
-    image_wizardform_background := ImgLoad(WizardForm.Handle, ExpandConstant('{tmp}\background_finish.png'), 0, 0, WIZARDFORM_WIDTH_NORMAL, WIZARDFORM_HEIGHT_NORMAL, False, True);
+    image_wizardform_background := ImgLoad(WizardForm.Handle, ExpandConstant('{tmp}\background_finish.png'), 0, 0, ScaleX(WIZARDFORM_WIDTH_NORMAL), ScaleY(WIZARDFORM_HEIGHT_NORMAL), False, True);
     ImgApplyChanges(WizardForm.Handle);
   end;
 end;
