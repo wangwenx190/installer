@@ -630,7 +630,7 @@ begin
     ClientHeight := ScaleY(20);
     Font.Size := 10;
     Font.Color := clWhite;
-    Caption := '{cm:messagebox_close_title}';
+    Caption := CustomMessage('messagebox_close_title');
     Transparent := True;
     OnMouseDown := @messagebox_on_mouse_down;
   end;
@@ -645,7 +645,7 @@ begin
     ClientHeight := ScaleY(20);
     Font.Size := 10;
     Font.Color := clBlack;
-    Caption := '{cm:messagebox_close_text}';
+    Caption := CustomMessage('messagebox_close_text');
     Transparent := True;
     OnMouseDown := @messagebox_on_mouse_down;
   end;
@@ -747,7 +747,7 @@ begin
   begin
     if is_installing_older_version() then
     begin
-      MsgBox('{cm:init_setup_outdated_version_warning}', mbInformation, MB_OK);
+      MsgBox(CustomMessage('init_setup_outdated_version_warning'), mbInformation, MB_OK);
       Result := False;
     end else
     begin
@@ -799,7 +799,7 @@ begin
     ClientHeight := ScaleY(20);
     Font.Size := 9;
     Font.Color := clWhite;
-    Caption := '{cm:wizardform_title}';
+    Caption := CustomMessage('wizardform_title');
     Transparent := True;
     OnMouseDown := @wizardform_on_mouse_down;
   end;
@@ -814,7 +814,7 @@ begin
     ClientHeight := ScaleY(20);
     Font.Size := 9;
     Font.Color := clGray;
-    Caption := '{cm:no_change_destdir_warning}';
+    Caption := CustomMessage('no_change_destdir_warning');
     Transparent := True;
     OnMouseDown := @wizardform_on_mouse_down;
   end;
@@ -946,7 +946,7 @@ begin
       ClientHeight := ScaleY(30);
       Font.Size := 10;
       Font.Color := clBlack;
-      Caption := '{cm:installing_label_text}';
+      Caption := CustomMessage('installing_label_text');
       Transparent := True;
       OnMouseDown := @wizardform_on_mouse_down;
     end;

@@ -1,13 +1,13 @@
 ﻿;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;此脚本主要模仿并实现“2345好压”安装程序的界面                                                       ;
-;请使用 Unicode 版 Inno Setup 5.5.0（或更新） 编译器编译                                            ;
-;经测试，此脚本可以在官方原版编译器、SkyGZ增强版编译器和Restools增强版编译器上完美编译通过并正常运行;
-;令人遗憾的是原始脚本作者已不可考                                                                   ;
-;代码主要思路来源于：http://blog.csdn.net/oceanlucy/article/details/50033773                        ;
-;感谢博主 “沉森心” （oceanlucy）                                                                    ;
-;此脚本也经过了几个网友的改进，但已无法具体考证，但我仍然很感谢他们                                 ;
-;最终版本由 “赵宇航”/“糖鸭君”/“糖鸭”/“唐雅”/“wangwenx190” 修改得到                                  ;
-;欢迎大家传播和完善此脚本                                                                           ;
+;; 此脚本主要模仿并实现“有道云笔记”安装程序的界面
+;; 请使用 Unicode 版 Inno Setup 5.5.0（或更新） 编译器编译
+;; 经测试，此脚本可以在官方原版编译器、SkyGZ增强版编译器和Restools增强版编译器上完美编译通过并正常运行
+;; 令人遗憾的是原始脚本作者已不可考
+;; 代码主要思路来源于：http://blog.csdn.net/oceanlucy/article/details/50033773
+;; 感谢博主 “沉森心” （oceanlucy）
+;; 此脚本也经过了几个网友的改进，已无法具体考证，但我仍然很感谢他们
+;; 最终版本由 “赵宇航”/“糖鸭君”/“糖鸭”/“唐雅”/“wangwenx190” 修改得到
+;; 欢迎大家传播和完善此脚本
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 #IF VER < EncodeVer(5,5,0)
@@ -138,7 +138,7 @@ ChangesAssociations             = no
 #endif
 #ifdef PortableBuild
 Uninstallable                   = no
-PrivilegesRequired              = lowest 
+PrivilegesRequired              = lowest
 #else
 Uninstallable                   = yes
 PrivilegesRequired              = admin
@@ -149,6 +149,7 @@ UninstallFilesDir               = {app}\Uninstaller
 OutputBaseFilename              = {#MyAppSetupExe}
 
 [Languages]
+;此段的第一个语言为默认语言，除此之外，语言的名称与顺序都无所谓
 Name: "english";             MessagesFile: ".\{lang}\English.isl"
 Name: "chinesesimplified";   MessagesFile: ".\{lang}\ChineseSimplified.isl"
 Name: "afrikaans";           MessagesFile: ".\{lang}\Afrikaans.isl"
@@ -221,20 +222,21 @@ Name: "valencian";           MessagesFile: ".\{lang}\Valencian.isl"
 Name: "vietnamese";          MessagesFile: ".\{lang}\Vietnamese.isl"
 
 [CustomMessages]
-;English
-english.messagebox_close_title              = "{#MyAppName} Setup"
-english.messagebox_close_text               = "Are you sure to abort {#MyAppName} setup?"
-english.init_setup_outdated_version_warning = "You have already installed a newer version of {#MyAppName}, so you are not allowed to continue. Click <OK> to abort."
-english.wizardform_title                    = "{#MyAppName} V{#MyAppVersion} Setup"
-english.no_change_destdir_warning           = "You are not allowed to change destination folder."
-english.installing_label_text               = "Installing"
+;此段条目在等号后面直接跟具体的值，不能加双引号
+;English（默认语言）
+english.messagebox_close_title              = {#MyAppName} Setup
+english.messagebox_close_text               = Are you sure to abort {#MyAppName} setup?
+english.init_setup_outdated_version_warning = You have already installed a newer version of {#MyAppName}, so you are not allowed to continue. Click <OK> to abort.
+english.wizardform_title                    = {#MyAppName} V{#MyAppVersion} Setup
+english.no_change_destdir_warning           = You are not allowed to change destination folder.
+english.installing_label_text               = Installing
 ;简体中文
-chinesesimplified.messagebox_close_title              = "{#MyAppName} 安装"
-chinesesimplified.messagebox_close_text               = "您确定要退出“{#MyAppName}”安装程序吗？"
-chinesesimplified.init_setup_outdated_version_warning = "您已安装更新版本的“{#MyAppName}”，不允许使用旧版本替换新版本，请单击“确定”按钮退出此安装程序。"
-chinesesimplified.wizardform_title                    = "{#MyAppName} V{#MyAppVersion} 安装"
-chinesesimplified.no_change_destdir_warning           = "软件已经安装，不允许更换目录。"
-chinesesimplified.installing_label_text               = "正在安装"
+chinesesimplified.messagebox_close_title              = {#MyAppName} 安装
+chinesesimplified.messagebox_close_text               = 您确定要退出“{#MyAppName}”安装程序吗？
+chinesesimplified.init_setup_outdated_version_warning = 您已安装更新版本的“{#MyAppName}”，不允许使用旧版本替换新版本，请单击“确定”按钮退出此安装程序。
+chinesesimplified.wizardform_title                    = {#MyAppName} V{#MyAppVersion} 安装
+chinesesimplified.no_change_destdir_warning           = 软件已经安装，不允许更换目录。
+chinesesimplified.installing_label_text               = 正在安装
 
 [Files]
 ;包含所有临时资源文件
@@ -284,7 +286,7 @@ Name: "{app}\Uninstaller"; Attribs: hidden system
 #endif
 
 ;若有写入INI条目的需要，请取消此区段的注释并自行添加相关脚本
-;[INI] 
+;[INI]
 ;Filename: "{app}\MyProg.ini"; Section: "InstallSettings"; Key: "InstallPath"; String: "{app}"; Flags: uninsdeleteentry
 
 ;若有写入注册表条目的需要，请取消此区段的注释并自行添加相关脚本
