@@ -460,7 +460,7 @@ begin
   if is_wizardform_show_normal then
   begin
     stop_animation_timer;
-    image_wizardform_background := ImgLoad(WizardForm.Handle, ExpandConstant('{tmp}\background_welcome_more.png'), 0, 0, ScaleX(WIZARDFORM_WIDTH_NORMAL), ScaleY(WIZARDFORM_HEIGHT_MORE), False, True);
+    image_wizardform_background := ImgLoad(WizardForm.Handle, ExpandConstant('{tmp}\background_welcome_more.png'), 0, 0, ScaleX(WIZARDFORM_WIDTH_NORMAL), ScaleY(WIZARDFORM_HEIGHT_MORE), True, True);
     is_wizardform_show_normal := False;
     wizardform_animation_timer := SetTimer(0, 0, 1, WrapTimerProc(@show_full_wizardform_animation, 4));
     BtnSetVisibility(button_customize_setup, False);
@@ -470,7 +470,7 @@ begin
     stop_animation_timer;
     is_wizardform_show_normal := True;
     wizardform_animation_timer := SetTimer(0, 0, 1, WrapTimerProc(@show_normal_wizardform_animation, 4));
-    image_wizardform_background := ImgLoad(WizardForm.Handle, ExpandConstant('{tmp}\background_welcome.png'), 0, 0, ScaleX(WIZARDFORM_WIDTH_NORMAL), ScaleY(WIZARDFORM_HEIGHT_NORMAL), False, True);
+    image_wizardform_background := ImgLoad(WizardForm.Handle, ExpandConstant('{tmp}\background_welcome.png'), 0, 0, ScaleX(WIZARDFORM_WIDTH_NORMAL), ScaleY(WIZARDFORM_HEIGHT_NORMAL), True, True);
     BtnSetVisibility(button_customize_setup, True);
     BtnSetVisibility(button_uncustomize_setup, False);
   end;
@@ -626,7 +626,7 @@ begin
     AutoSize := False;
     Left := ScaleX(30);
     Top := ScaleY(5);
-    ClientWidth := ScaleX(400);
+    ClientWidth := ScaleX(500);
     ClientHeight := ScaleY(20);
     Font.Size := 10;
     Font.Color := clWhite;
@@ -662,7 +662,7 @@ begin
     Transparent := True;
     OnMouseDown := @messagebox_on_mouse_down;
   end;
-  image_messagebox_background := ImgLoad(messagebox_close.Handle, ExpandConstant('{tmp}\background_messagebox.png'), 0, 0, ScaleX(380), ScaleY(190), False, True);
+  image_messagebox_background := ImgLoad(messagebox_close.Handle, ExpandConstant('{tmp}\background_messagebox.png'), 0, 0, ScaleX(380), ScaleY(190), True, True);
   button_messagebox_close := BtnCreate(messagebox_close.Handle, ScaleX(350), 0, ScaleX(30), ScaleY(30), ExpandConstant('{tmp}\button_close.png'), 0, False);
   BtnSetEvent(button_messagebox_close, ID_BUTTON_ON_CLICK_EVENT, WrapBtnCallback(@button_messagebox_cancel_on_click, 1));
   button_messagebox_ok := BtnCreate(messagebox_close.Handle, ScaleX(206), ScaleY(150), ScaleX(76), ScaleY(28), ExpandConstant('{tmp}\button_ok.png'), 0, False);
@@ -795,7 +795,7 @@ begin
     AutoSize := False;
     Left := ScaleX(10);
     Top := ScaleY(5);
-    ClientWidth := ScaleX(200);
+    ClientWidth := ScaleX(300);
     ClientHeight := ScaleY(20);
     Font.Size := 9;
     Font.Color := clWhite;
@@ -810,7 +810,7 @@ begin
     AutoSize := False;
     Left := ScaleX(85);
     Top := ScaleY(449);
-    ClientWidth := ScaleX(200);
+    ClientWidth := ScaleX(300);
     ClientHeight := ScaleY(20);
     Font.Size := 9;
     Font.Color := clGray;
@@ -890,7 +890,7 @@ procedure CurPageChanged(CurPageID : integer);
 begin
   if (CurPageID = wpWelcome) then
   begin
-    image_wizardform_background := ImgLoad(WizardForm.Handle, ExpandConstant('{tmp}\background_welcome.png'), 0, 0, ScaleX(WIZARDFORM_WIDTH_NORMAL), ScaleY(WIZARDFORM_HEIGHT_NORMAL), False, True);
+    image_wizardform_background := ImgLoad(WizardForm.Handle, ExpandConstant('{tmp}\background_welcome.png'), 0, 0, ScaleX(WIZARDFORM_WIDTH_NORMAL), ScaleY(WIZARDFORM_HEIGHT_NORMAL), True, True);
     button_license := BtnCreate(WizardForm.Handle, ScaleX(110), ScaleY(376), ScaleX(96), ScaleY(12), ExpandConstant('{tmp}\button_license.png'), 0, False);
     BtnSetEvent(button_license, ID_BUTTON_ON_CLICK_EVENT, WrapBtnCallback(@button_license_on_click, 1));
     checkbox_license := BtnCreate(WizardForm.Handle, ScaleX(11), ScaleY(374), ScaleX(93), ScaleY(17), ExpandConstant('{tmp}\checkbox_license.png'), 0, True);
@@ -966,8 +966,8 @@ begin
       Alignment := taRightJustify;
       OnMouseDown := @wizardform_on_mouse_down;
     end;
-    image_wizardform_background := ImgLoad(WizardForm.Handle, ExpandConstant('{tmp}\background_installing.png'), 0, 0, ScaleX(WIZARDFORM_WIDTH_NORMAL), ScaleY(WIZARDFORM_HEIGHT_NORMAL), False, True);
-    image_progressbar_background := ImgLoad(WizardForm.Handle, ExpandConstant('{tmp}\progressbar_background.png'), ScaleX(20), ScaleY(374), ScaleX(560), ScaleY(6), False, True);
+    image_wizardform_background := ImgLoad(WizardForm.Handle, ExpandConstant('{tmp}\background_installing.png'), 0, 0, ScaleX(WIZARDFORM_WIDTH_NORMAL), ScaleY(WIZARDFORM_HEIGHT_NORMAL), True, True);
+    image_progressbar_background := ImgLoad(WizardForm.Handle, ExpandConstant('{tmp}\progressbar_background.png'), ScaleX(20), ScaleY(374), ScaleX(560), ScaleY(6), True, True);
     image_progressbar_foreground := ImgLoad(WizardForm.Handle, ExpandConstant('{tmp}\progressbar_foreground.png'), ScaleX(20), ScaleY(374), 0, 0, True, True);
     BtnSetVisibility(button_setup_or_next, False);
 #ifdef ShowSlidePictures
@@ -1014,7 +1014,7 @@ begin
     button_setup_or_next := BtnCreate(WizardForm.Handle, ScaleX(214), ScaleY(305), ScaleX(180), ScaleY(44), ExpandConstant('{tmp}\button_finish.png'), 0, False);
     BtnSetEvent(button_setup_or_next, ID_BUTTON_ON_CLICK_EVENT, WrapBtnCallback(@button_setup_or_next_on_click, 1));
     BtnSetEvent(button_close, ID_BUTTON_ON_CLICK_EVENT, WrapBtnCallback(@button_setup_or_next_on_click, 1));
-    image_wizardform_background := ImgLoad(WizardForm.Handle, ExpandConstant('{tmp}\background_finish.png'), 0, 0, ScaleX(WIZARDFORM_WIDTH_NORMAL), ScaleY(WIZARDFORM_HEIGHT_NORMAL), False, True);
+    image_wizardform_background := ImgLoad(WizardForm.Handle, ExpandConstant('{tmp}\background_finish.png'), 0, 0, ScaleX(WIZARDFORM_WIDTH_NORMAL), ScaleY(WIZARDFORM_HEIGHT_NORMAL), True, True);
     ImgApplyChanges(WizardForm.Handle);
   end;
 end;
