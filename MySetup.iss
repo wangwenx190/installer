@@ -224,19 +224,19 @@ Name: "vietnamese";          MessagesFile: ".\{lang}\Vietnamese.isl"
 [CustomMessages]
 ;此段条目在等号后面直接跟具体的值，不能加双引号
 ;English（默认语言）
-english.messagebox_close_title              = {#MyAppName} Setup
-english.messagebox_close_text               = Are you sure to abort {#MyAppName} setup?
-english.init_setup_outdated_version_warning = You have already installed a newer version of {#MyAppName}, so you are not allowed to continue. Click <OK> to abort.
-english.wizardform_title                    = {#MyAppName} V{#MyAppVersion} Setup
-english.no_change_destdir_warning           = You are not allowed to change destination folder.
-english.installing_label_text               = Installing
+english.messagebox_close_title              ={#MyAppName} Setup
+english.messagebox_close_text               =Are you sure to abort {#MyAppName} setup?
+english.init_setup_outdated_version_warning =You have already installed a newer version of {#MyAppName}, so you are not allowed to continue. Click <OK> to abort.
+english.wizardform_title                    ={#MyAppName} V{#MyAppVersion} Setup
+english.no_change_destdir_warning           =You are not allowed to change destination folder.
+english.installing_label_text               =Installing
 ;简体中文
-chinesesimplified.messagebox_close_title              = {#MyAppName} 安装
-chinesesimplified.messagebox_close_text               = 您确定要退出“{#MyAppName}”安装程序吗？
-chinesesimplified.init_setup_outdated_version_warning = 您已安装更新版本的“{#MyAppName}”，不允许使用旧版本替换新版本，请单击“确定”按钮退出此安装程序。
-chinesesimplified.wizardform_title                    = {#MyAppName} V{#MyAppVersion} 安装
-chinesesimplified.no_change_destdir_warning           = 软件已经安装，不允许更换目录。
-chinesesimplified.installing_label_text               = 正在安装
+chinesesimplified.messagebox_close_title              ={#MyAppName} 安装
+chinesesimplified.messagebox_close_text               =您确定要退出“{#MyAppName}”安装程序吗？
+chinesesimplified.init_setup_outdated_version_warning =您已安装更新版本的“{#MyAppName}”，不允许使用旧版本替换新版本，请单击“确定”按钮退出此安装程序。
+chinesesimplified.wizardform_title                    ={#MyAppName} V{#MyAppVersion} 安装
+chinesesimplified.no_change_destdir_warning           =软件已经安装，不允许更换目录。
+chinesesimplified.installing_label_text               =正在安装
 
 [Files]
 ;包含所有临时资源文件
