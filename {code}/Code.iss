@@ -317,7 +317,7 @@ begin
 #ifndef x64Build
   if is_platform_windows_7 then
   begin
-    if IsWin64 then
+    if Is64BitInstallMode then
     begin
       if RegKeyExists(HKEY_LOCAL_MACHINE, PRODUCT_REGISTRY_KEY_64) then
       begin
