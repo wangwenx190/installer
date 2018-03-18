@@ -20,6 +20,10 @@
 #define EX_VERSION_MINOR 0
 #define EX_VERSION_PATCH 0
 #define EX_VERSION_BUILD 0
+#ifndef ISPP_INVOKED
+#define EX_VERSION_NUM          EX_VERSION_MAJOR,EX_VERSION_MINOR,EX_VERSION_PATCH,EX_VERSION_BUILD
+#define EX_VERSION_STR          _T("1.0.0.0")
+#endif
 
 #define EX_APP_ID_32_STR        _T("{BC3D821C-7EFA-41F8-B1C2-8A55DDFE5A67}")
 #define EX_APP_ID_64_STR        _T("{B74B8C7D-C21A-41B1-B419-9D63B484EEF4}")
@@ -33,28 +37,17 @@
 #define EX_UPDATE_URL_STR       EX_COMPANY_URL_STR
 #define EX_CONTACT_STR          EX_COMPANY_NAME_STR
 #define EX_SUPPORT_PHONE_STR    _T("10010001000")
-#define EX_README_URL_STR       _T("https://github.com/wangwenx190/InternetFashionedInstaller/blob/2345HaoZip/README.md")
-#define EX_LICENSE_URL_STR      _T("https://github.com/wangwenx190/InternetFashionedInstaller/blob/2345HaoZip/LICENSE")
+#define EX_README_URL_STR       _T("https://github.com/wangwenx190/installer/blob/master/README.md")
+#define EX_LICENSE_URL_STR      _T("https://github.com/wangwenx190/installer/blob/master/LICENSE")
 #define EX_COMMENTS_STR         _T("Comments")
-#define EX_COPYRIGHT_STR        _T("Distribute under MIT license.")
-
-#ifndef ISPP_INVOKED
-#define EX_VERSION_NUM      EX_VERSION_MAJOR,EX_VERSION_MINOR,EX_VERSION_PATCH,EX_VERSION_BUILD
-#define EX_VERSION_STR      MAKE_STR(EX_VERSION_MAJOR) _T(".") \
-                            MAKE_STR(EX_VERSION_MINOR) _T(".") \
-                            MAKE_STR(EX_VERSION_PATCH) _T(".") \
-                            MAKE_STR(EX_VERSION_BUILD)
-#define EX_VERSION_STR_FULL EX_VERSION_STR
-#endif
+#define EX_COPYRIGHT_STR        _T("Unlicense.")
 
 #ifdef _WIN64
-#define EX_ARCH_STR      _T("x64")
-#define EX_APP_ID_STR    EX_APP_ID_64_STR
-#define EX_APP_MUTEX_STR EX_APP_MUTEX_64_STR
+#define EX_APP_ID_STR           EX_APP_ID_64_STR
+#define EX_APP_MUTEX_STR        EX_APP_MUTEX_64_STR
 #else
-#define EX_ARCH_STR      _T("x86")
-#define EX_APP_ID_STR    EX_APP_ID_32_STR
-#define EX_APP_MUTEX_STR EX_APP_MUTEX_32_STR
+#define EX_APP_ID_STR           EX_APP_ID_32_STR
+#define EX_APP_MUTEX_STR        EX_APP_MUTEX_32_STR
 #endif
 
 #endif

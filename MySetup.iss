@@ -20,9 +20,6 @@
 
 #include ".\version.h"
 
-;指定是否为64位安装程序
-;#define x64Build
-
 ;指定是否只能在 Windows 7 SP1 及更新版本的操作系统上安装
 ;#define Windows7AndNewer
 
@@ -56,19 +53,17 @@
 #define MyAppLicenseURL   str(EX_LICENSE_URL_STR)
 #define MyAppCopyright    str(EX_COPYRIGHT_STR)
 #define MyAppBaseBinDir   ".\{app}"
-#ifdef x64Build
+#define MyAppID           str(EX_APP_ID_STR)
+#define MyAppMutex        str(EX_APP_MUTEX_STR)
+#ifdef _WIN64
   #define MyAppBinDir     AddBackslash(MyAppBaseBinDir) + "ex_x64"
-  #define MyAppID         str(EX_APP_ID_64_STR)
   #define MyAppName       str(EX_APP_NAME_STR) + "(64-bit)"
   #define MyAppExeName    "MyApp64.exe"
-  #define MyAppMutex      str(EX_APP_MUTEX_64_STR)
   #define MyAppSetupExe   MyAppName + "_" + MyAppVersion + "_x64"
 #else
   #define MyAppBinDir     AddBackslash(MyAppBaseBinDir) + "ex_x86"
-  #define MyAppID         str(EX_APP_ID_32_STR)
   #define MyAppName       str(EX_APP_NAME_STR)
   #define MyAppExeName    "MyApp.exe"
-  #define MyAppMutex      str(EX_APP_MUTEX_32_STR)
   #define MyAppSetupExe   MyAppName + "_" + MyAppVersion + "_x86"
 #endif
 #ifdef PortableBuild
@@ -117,7 +112,7 @@ AppMutex                        = {{#MyAppMutex}
 LanguageDetectionMethod         = uilanguage
 ShowLanguageDialog              = no
 AllowCancelDuringInstall        = no
-#ifdef x64Build
+#ifdef _WIN64
 ArchitecturesAllowed            = x64
 ArchitecturesInstallIn64BitMode = x64
 DefaultDirName                  = {pf64}\{#MyAppPublisher}\{#MyAppName}
@@ -289,6 +284,7 @@ Name: "{app}\Uninstaller"; Attribs: hidden system
 [INI]
 Filename: "{app}\Uninstall.ini"; Section: "General"; Key: "Name";    String: "{#MyAppName}"
 Filename: "{app}\Uninstall.ini"; Section: "General"; Key: "Version"; String: "{#MyAppVersion}"
+Filename: "{app}\Uninstall.ini"; Section: "General"; Key: "Mutex";   String: "{#MyAppMutex}"
 Filename: "{app}\Uninstall.ini"; Section: "General"; Key: "Path";    String: "{uninstallexe}"
 Filename: "{app}\Uninstall.ini"; Section: "General"; Key: "Params";  String: "/VERYSILENT /SUPPRESSMSGBOXES /NORESTART"
 Filename: "{app}\Uninstall.ini"; Section: "General"; Key: "Dir";     String: "{app}\Uninstaller"

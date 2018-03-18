@@ -334,7 +334,7 @@ end;
 //这个函数的作用是判断是否已经安装了将要安装的产品，若已经安装，则返回TRUE，否则返回FALSE
 function is_installed_before() : boolean;
 begin
-#ifndef x64Build
+#ifndef _WIN64
   if is_platform_windows_7 then
   begin
     if Is64BitInstallMode then
