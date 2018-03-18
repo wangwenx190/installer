@@ -66,6 +66,26 @@ function KillTimer(hWnd, nIDEvent: longword): longword; external 'KillTimer@user
 function SetClassLong(h : hwnd; nIndex : integer; dwNewLong : longint) : DWORD; external 'SetClassLongW@user32.dll stdcall';
 function GetClassLong(h : hwnd; nIndex : integer) : DWORD; external 'GetClassLongW@user32.dll stdcall';
 
+//如果使用自定义卸载程序，就修改注册表，将默认卸载程序路径改为我们自己的卸载程序的路径
+procedure change_reg_uninst;
+begin
+  if RegValueExists(HKEY_LOCAL_MACHINE, PRODUCT_REGISTRY_KEY_32, 'UninstallString') then
+  begin
+    RegDeleteValue(HKEY_LOCAL_MACHINE, PRODUCT_REGISTRY_KEY_32, 'UninstallString');
+  end;
+  if RegValueExists(HKEY_LOCAL_MACHINE, PRODUCT_REGISTRY_KEY_64, 'UninstallString') then
+  begin
+    RegDeleteValue(HKEY_LOCAL_MACHINE, PRODUCT_REGISTRY_KEY_64, 'UninstallString');
+  end;
+  if Is64BitInstallMode then
+  begin
+    RegWriteStringValue(HKEY_LOCAL_MACHINE, PRODUCT_REGISTRY_KEY_64, 'UninstallString', ExpandConstant('"{app}\Uninstall.exe"'));
+  end else
+  begin
+    RegWriteStringValue(HKEY_LOCAL_MACHINE, PRODUCT_REGISTRY_KEY_32, 'UninstallString', ExpandConstant('"{app}\Uninstall.exe"'));
+  end;
+end;
+
 //停止轮播计时器
 procedure stop_slide_timer;
 begin
@@ -1027,12 +1047,15 @@ begin
 #ifdef RegisteAssociations
     check_if_need_change_associations();
 #endif
-    //and do OTHER THINGS
+    //and do other things you want
   end;
   if (CurStep = ssDone) then
   begin
     is_wizardform_released := True;
     release_installer();
+#ifdef UseCustomUninstaller
+    change_reg_uninst;
+#endif
   end;
 end;
 

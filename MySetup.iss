@@ -40,7 +40,6 @@
 
 ;指定是否使用自定义卸载程序
 ;#define UseCustomUninstaller
-;#define CustomUninstaller ".\{output}\Uninstall.exe"
 
 ;若想开启禁止安装旧版本的功能，此处版本号请注意一定要是
 ;点分十进制的正整数，除数字和英文半角句点以外不允许出现任何其他字符，
@@ -143,7 +142,7 @@ PrivilegesRequired              = lowest
 Uninstallable                   = yes
 PrivilegesRequired              = admin
 UninstallDisplayName            = {#MyAppName}
-UninstallDisplayIcon            = {uninstallexe},0
+UninstallDisplayIcon            = {app}\{#MyAppExeName},0
 UninstallFilesDir               = {app}\Uninstaller
 #endif
 OutputBaseFilename              = {#MyAppSetupExe}
@@ -273,8 +272,8 @@ Source: ".\{tmp}\slides_picture_4.png";         DestDir: "{tmp}"; Flags: dontcop
 ;Source: ".\{#MyAppBinDir}\*";                   DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 #ifndef PortableBuild
 #ifdef UseCustomUninstaller
-#if FileExists({#CustomUninstaller})
-Source: "{#CustomUninstaller}";                 DestDir: "{app}"; Flags: ignoreversion
+#if FileExists(".\{output}\Uninstall.exe")
+Source: ".\{output}\Uninstall.exe";             DestDir: "{app}"; Flags: ignoreversion
 #endif
 #endif
 #endif
@@ -285,9 +284,17 @@ Source: "{#CustomUninstaller}";                 DestDir: "{app}"; Flags: ignorev
 Name: "{app}\Uninstaller"; Attribs: hidden system
 #endif
 
-;若有写入INI条目的需要，请取消此区段的注释并自行添加相关脚本
-;[INI]
-;Filename: "{app}\MyProg.ini"; Section: "InstallSettings"; Key: "InstallPath"; String: "{app}"; Flags: uninsdeleteentry
+#ifndef PortableBuild
+#ifdef UseCustomUninstaller
+[INI]
+Filename: "{app}\Uninstall.ini"; Section: "General"; Key: "Name";    String: "{#MyAppName}"
+Filename: "{app}\Uninstall.ini"; Section: "General"; Key: "Version"; String: "{#MyAppVersion}"
+Filename: "{app}\Uninstall.ini"; Section: "General"; Key: "Path";    String: "{uninstallexe}"
+Filename: "{app}\Uninstall.ini"; Section: "General"; Key: "Params";  String: "/VERYSILENT /SUPPRESSMSGBOXES /NORESTART"
+Filename: "{app}\Uninstall.ini"; Section: "General"; Key: "Dir";     String: "{app}\Uninstaller"
+Filename: "{app}\Uninstall.ini"; Section: "General"; Key: "File";    String: "Uninstaller.zip"
+#endif
+#endif
 
 ;若有写入注册表条目的需要，请取消此区段的注释并自行添加相关脚本
 ;[Registry]
